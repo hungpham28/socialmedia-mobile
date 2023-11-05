@@ -4,12 +4,13 @@ plugins {
 
 android {
     namespace 'com.team8.socialmedia'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.team8.socialmedia"
         minSdk 27
-        targetSdk 33
+        //noinspection EditedTargetSdkVersion
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
