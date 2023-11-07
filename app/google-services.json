@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "646476017356",
+    "project_id": "socialmediamobile-c1132",
+    "storage_bucket": "socialmediamobile-c1132.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:646476017356:android:663b8cf820d6e3f8425c69",
+        "android_client_info": {
+          "package_name": "com.team8.socialmedia"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKVYjug_RVw1LyrsXb-wsJf6Z17S5MsCE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
