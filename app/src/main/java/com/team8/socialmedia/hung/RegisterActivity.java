@@ -6,6 +6,7 @@ import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -24,7 +25,7 @@ public class RegisterActivity extends AppCompatActivity {
     EditText emailEt,passwordEt;
     Button registerBtn;
     ProgressDialog progressDialog;
-
+    TextView haveAccTv;
     //Declare an instance of firebaseAuth
     private FirebaseAuth mAuth;
     @Override
@@ -42,6 +43,7 @@ public class RegisterActivity extends AppCompatActivity {
         emailEt=findViewById(R.id.emailEt);
         passwordEt=findViewById(R.id.passwordEt);
         registerBtn=findViewById(R.id.registerBtn);
+        haveAccTv=findViewById(R.id.have_account_tv);
        //initialize the firebaseAuth instance
         mAuth = FirebaseAuth.getInstance();
         // Check if user is signed in (non-null) and update UI accordingly.
@@ -70,6 +72,13 @@ public class RegisterActivity extends AppCompatActivity {
                 }else {
                     regisiterUser(email,password);
                 }
+            }
+        });
+        //handle login textview click listener
+        haveAccTv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(RegisterActivity.this,LoginActivity.class));
             }
         });
     }
@@ -104,6 +113,7 @@ public class RegisterActivity extends AppCompatActivity {
 
                     }
                 });
+
     }
 
     @Override

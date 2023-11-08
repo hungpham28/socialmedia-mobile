@@ -6,13 +6,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="20dp"
-        tools:context=".hung.RegisterActivity">
+        tools:context=".hung.LoginActivity">
 
     <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAlignment="center"
-            android:text="Register"
+            android:text="Login"
             android:textColor="@color/black"
             android:textSize="25dp"
             android:layout_above="@+id/emailTIL"
@@ -24,11 +24,11 @@
             android:layout_centerHorizontal="true"
             android:id="@+id/emailTIL">
         <EditText
-                android:textColor="@color/black"
                 android:id="@+id/emailEt"
                 android:inputType="textEmailAddress"
                 android:hint="Email"
                 android:textSize="20dp"
+                android:textColor="@color/black"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
@@ -42,36 +42,58 @@
             android:id="@+id/passwordTIL"
             android:layout_below="@id/emailTIL">
         <EditText
-                android:textColor="@color/black"
                 android:id="@+id/passwordEt"
                 android:inputType="textPassword"
                 android:hint="Password"
                 android:textSize="20dp"
+                android:textColor="@color/black"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <Button
-            android:id="@+id/registerBtn"
+            android:id="@+id/loginBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Register"
-            android:drawablePadding="5dp"
-            android:textSize="20dp"
-            android:drawableLeft="@drawable/baseline_account_box_24"
+            android:text="Login"
             android:layout_below="@id/passwordTIL"
+            android:drawablePadding="5dp"
+            android:layout_marginTop="10dp"
+            android:textSize="20dp"
+            android:drawableLeft="@drawable/baseline_login_24"
             android:layout_centerHorizontal="true"
-            android:backgroundTint="@color/secondary"
+            style="@style/Widget.AppCompat.Button.Colored"
             />
-    <!--TextView: click go to LoginActivity -->
+
+    <!--TextView: show dialog to recover password -->
     <TextView
-            android:id="@+id/have_account_tv"
+            android:id="@+id/recover_tv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Already have account? Login"
+            android:text="Forgot Password? Recover"
             android:textAlignment="center"
-            android:layout_below="@id/registerBtn"
+            android:layout_below="@id/loginBtn"
+            android:textColor="@color/black"/>
+    <!--GoogleSignInBtn: Sign in with google account-->
+    <com.google.android.gms.common.SignInButton
+            android:id="@+id/gLogin_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:layout_below="@id/recover_tv"
+            />
+
+    <!--TextView: click go to LoginActivity -->
+    <TextView
+            android:id="@+id/not_have_account_tv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Not have account? Register"
+            android:textAlignment="center"
+            android:layout_alignParentBottom="true"
             android:layout_marginTop="30dp"
+            android:layout_marginBottom="20dp"
             android:textColor="@color/black"/>
 </RelativeLayout>

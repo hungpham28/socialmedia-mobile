@@ -11,21 +11,29 @@
             android:layout_height="250dp"
             android:src="@drawable/logo"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="20dp"/>
+            android:layout_marginTop="50dp"/>
     <Button
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/register_id"
+            android:minWidth="250dp"
+            android:layout_centerHorizontal="true"
             android:text="Register"
-            style="@style/Widget.AppCompat.Button.Colored"
+            android:textSize="18dp"
+            android:backgroundTint="@color/secondary"
+            android:drawableLeft="@drawable/baseline_account_box_24"
             android:layout_above="@id/btn_login"/>
     <Button
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/btn_login"
+            android:minWidth="250dp"
+            android:textSize="18dp"
+            android:layout_centerHorizontal="true"
             android:layout_alignParentBottom="true"
             android:layout_marginBottom="100dp"
+            android:drawableLeft="@drawable/baseline_login_24"
             android:text="Login"
-            style="@style/Widget.AppCompat.Button.Colored"
             />
+
 </RelativeLayout>
