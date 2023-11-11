@@ -18,7 +18,7 @@
             android:name=".hung.LoginActivity"
             android:exported="false" />
         <activity
-            android:name=".hung.ProfileActivity"
+            android:name=".hung.DashboardActivity"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
