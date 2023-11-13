@@ -21,6 +21,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
+import com.team8.socialmedia.kone.ChatListFragment;
 import com.team8.socialmedia.vu.HomeFragment;
 import com.team8.socialmedia.vu.ProfileFragment;
 import com.team8.socialmedia.vu.UsersFragment;
@@ -78,6 +79,14 @@ public class DashboardActivity extends AppCompatActivity {
                 FragmentTransaction ft3 = getSupportFragmentManager().beginTransaction();
                 ft3.replace(R.id.container, fragment3, "");
                 ft3.commit();
+                return true;
+            }
+            if (menuItem.getItemId() == R.id.nav_chat) {
+                actionBar.setTitle("Chats");
+                ChatListFragment fragment4 = new ChatListFragment();
+                FragmentTransaction ft4 = getSupportFragmentManager().beginTransaction();
+                ft4.replace(R.id.container, fragment4, "");
+                ft4.commit();
                 return true;
             }
             return false;

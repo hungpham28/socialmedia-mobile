@@ -25,6 +25,9 @@
             android:name=".hung.LoginActivity"
             android:exported="false" />
         <activity
+            android:name=".kone.ChatActivity"
+            android:theme="@style/AppThemeNo"/>
+        <activity
             android:name=".hung.DashboardActivity"
             android:exported="true" >
             <intent-filter>
