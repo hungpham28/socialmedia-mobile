@@ -94,7 +94,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     private void regisiterUser(String email, String password) {
         //email and password pattern is valid, show progress dialog and start registering user
-        //progressDialog.show();
+        progressDialog.show();
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -117,6 +117,7 @@ public class RegisterActivity extends AppCompatActivity {
                             hashMap.put("name", "");
                             hashMap.put("phone", "");
                             hashMap.put("image", "");
+                            hashMap.put("cover", "");
                             //firebase database instance
                             FirebaseDatabase database = FirebaseDatabase.getInstance();
                             //path
