@@ -23,8 +23,12 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.*;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.team8.socialmedia.R;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
 
 public class LoginActivity extends AppCompatActivity {
     EditText emailEt, passwordEt;
@@ -216,7 +220,7 @@ public class LoginActivity extends AppCompatActivity {
                             progressDialog.dismiss();
                             // Sign in success, update UI with the signed-in user's information
                             FirebaseUser user = mAuth.getCurrentUser();
-                            startActivity(new Intent(LoginActivity.this,ProfileActivity.class));
+                            startActivity(new Intent(LoginActivity.this, DashboardActivity.class));
                             finish();
                         } else {
                             // If sign in fails, display a message to the user.
@@ -262,10 +266,37 @@ public class LoginActivity extends AppCompatActivity {
 
                                             // Sign in success, update UI with the signed-in user's information
                                             FirebaseUser user = mAuth.getCurrentUser();
+
+                                            //Begin : vu
+                                            if(task.getResult().getAdditionalUserInfo().isNewUser())
+                                            {
+                                                //get user email and uid
+                                                String email = user.getEmail();
+                                                String uid = user.getUid();
+                                                //when user is registered store user info in firebase realtime database too
+                                                //using HashMap
+                                                HashMap<Object, String> hashMap = new HashMap<>();
+                                                //put info to Hashmap
+                                                hashMap.put("email", email);
+                                                hashMap.put("uid", uid);
+                                                hashMap.put("name", "");
+                                                hashMap.put("phone", "");
+                                                hashMap.put("image", "");
+                                                hashMap.put("cover", "");
+                                                //firebase database instance
+                                                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                                                //path
+                                                DatabaseReference reference = database.getReference("Users");
+                                                //put data within hashmap in database
+                                                reference.child(uid).setValue(hashMap);
+                                            }
+
+                                            //End
+
                                             //show user email in Toast
                                             Toast.makeText(LoginActivity.this,"Hi, "+user.getEmail(),Toast.LENGTH_SHORT).show();
 
-                                            startActivity(new Intent(LoginActivity.this,ProfileActivity.class));
+                                            startActivity(new Intent(LoginActivity.this, DashboardActivity.class));
                                             finish();
                                         } else {
                                             // If sign in fails, display a message to the user.
