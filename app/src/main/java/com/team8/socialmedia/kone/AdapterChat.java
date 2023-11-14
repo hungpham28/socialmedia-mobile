@@ -82,15 +82,7 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
         else{
             myHolder.isSeenTv.setVisibility(View.GONE);
         }
-//        if (timeStamp != null) {
-//            long timestampLong = Long.parseLong(timeStamp);
-//
-//            // Handle the case where timeStamp is null
-//
-//
-//        } else {
-//
-//        }
+
 
     }
 

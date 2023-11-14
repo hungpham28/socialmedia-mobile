@@ -8,7 +8,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,8 +36,10 @@ import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 public class ChatActivity extends AppCompatActivity {
     //  View from xml
@@ -108,10 +113,32 @@ public class ChatActivity extends AppCompatActivity {
                     //get data
                     String name = "" + ds.child("name").getValue();
                     hisImage = "" + ds.child("image").getValue();
+                    String typingStatus = "" + ds.child("typingTo").getValue();
+
+                    //Check typing status
+                    if (typingStatus.equals(myUid)){
+                        userStatusTv.setText("typing...");
+                    }
+                    else{
+                        //Get value of onlinestatus
+                        String onlineStatus = "" + ds.child("onlineStatus").getValue();
+                        if (onlineStatus.equals("online")){
+                            userStatusTv.setText(onlineStatus);
+                        }
+                        else{
+                            //convert timestamp to proper time data
+                            //convert time stamp to dd/mm/yyyy hh:mm am/pm
+                            Calendar cal = Calendar.getInstance(Locale.US);
+                            cal.setTimeInMillis(Long.parseLong(onlineStatus));
+                            String dateTime = DateFormat.format("dd/MM/yyyy hh:mm aa", cal).toString();
+                            userStatusTv.setText("Lat seen at: "+ dateTime);
+
+                        }
+                    }
+
 
                     // Set data
                     nameTv.setText(name);
-
                     try {
                         // image received, set it to imageview in toolbar
                         Picasso.get().load(hisImage).placeholder(R.drawable.ic_default).into(profileIv);
@@ -143,6 +170,26 @@ public class ChatActivity extends AppCompatActivity {
                     //text not empty
                     sendMessage(message);
                 }
+            }
+        });
+        //Check edit text change listener
+        messageEt.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(s.toString().trim().length() ==0){
+                    checkTypingStatus(hisUid);//uid of receiver
+                }
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
             }
         });
 
@@ -236,17 +283,51 @@ public class ChatActivity extends AppCompatActivity {
             finish();
         }
     }
+    private void checkOnlineStatus(String status){
+        DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("Users").child(myUid);
+        HashMap<String, Object> hashMap = new HashMap<>();
+        hashMap.put("onlineStatus", status);
+
+        //Updata value od onlineStatus of current user
+        dbRef.updateChildren(hashMap);
+    }
+
+    private void checkTypingStatus(String typing){
+        DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("Users").child(myUid);
+        HashMap<String, Object> hashMap = new HashMap<>();
+        hashMap.put("typingTo", typing);
+
+        //Updata value od typingStatus of current user
+        dbRef.updateChildren(hashMap);
+    }
 
     @Override
     protected void onStart() {
         checkUserStatus();
+        //Set online
+        checkOnlineStatus("online");
         super.onStart();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+
+        //Get timestamp
+        String timestamp = String.valueOf(System.currentTimeMillis());
+
+        //set ofline with last seen time stamp
+        checkOnlineStatus(timestamp);
+        checkTypingStatus("noOne");
+
         userRefForSeen.removeEventListener(seenListener);
+    }
+
+    @Override
+    protected void onResume() {
+        //Set online
+        checkOnlineStatus("online");
+        super.onResume();
     }
 
     @Override
