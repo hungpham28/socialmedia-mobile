@@ -54,6 +54,7 @@ import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
+import com.team8.socialmedia.hung.AddPostActivity;
 
 import java.util.HashMap;
 
@@ -407,6 +408,7 @@ public class ProfileFragment extends Fragment {
     }
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
         //inflating menu
         inflater.inflate(R.menu.menu_main, menu);
         super.onCreateOptionsMenu(menu,inflater);
@@ -418,6 +420,9 @@ public class ProfileFragment extends Fragment {
         if (id == R.id.action_logout) {
             firebaseAuth.signOut();
             checkUserStatus();
+        }
+        if(id==R.id.action_add_post){
+            startActivity(new Intent(getActivity(), AddPostActivity.class ));
         }
         return super.onOptionsItemSelected(item);
     }

@@ -1,14 +1,451 @@
 package com.team8.socialmedia.hung;
 
+import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.ContentValues;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.provider.MediaStore;
+import android.text.TextUtils;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.*;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.*;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
 
 public class AddPostActivity extends AppCompatActivity {
+
+    ActionBar actionBar;
+    FirebaseAuth firebaseAuth;
+    DatabaseReference userDbRef;
+    //permisstions constants
+    private static final int CAMERA_REQUEST_CODE = 100;
+    private static final int STORAGE_REQUEST_CODE = 200;
+    //image pick constants
+    private static final int IMAGE_PICK_CAMERA_CODE = 300;
+    private static final int IMAGE_PICK_GALLERY_CODE = 400;
+
+    //permissions array
+    String[] cameraPermissions;
+    String[] storagePermissions;
+
+    //views
+    EditText titleEt, descriptionEt;
+    ImageView imageTv;
+    Button uploadBtn;
+
+    //user infor
+    String name, email, uid, dp;
+
+    //image picked will be samed in this uri
+    Uri image_rui=null;
+    //progress bar
+    ProgressDialog pd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_post);
+
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setTitle("Add new Post");
+        //enable back button in actionbar
+        actionBar.setDisplayShowHomeEnabled(true);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
+        //init permissions array
+        cameraPermissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        storagePermissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+        pd=new ProgressDialog(this);
+        firebaseAuth = FirebaseAuth.getInstance();
+        checkUserStatus();
+
+        actionBar.setSubtitle(email);
+
+        //get some info of current user to include in post
+        userDbRef = FirebaseDatabase.getInstance().getReference("Users");
+        Query query= userDbRef.orderByChild("email").equalTo(email);
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+                for (DataSnapshot ds: snapshot.getChildren()){
+                    name=""+ds.child("name").getValue();
+                    email=""+ds.child("email").getValue();
+                    dp=""+ds.child("dp").getValue();
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull @NotNull DatabaseError error) {
+
+            }
+        });
+
+        //init views
+        titleEt = findViewById(R.id.pTitleEt);
+        descriptionEt = findViewById(R.id.pDescriptionEt);
+        imageTv = findViewById(R.id.pImageIv);
+        uploadBtn = findViewById(R.id.pUploadBtn);
+
+        //get image from camera/gallery on click
+        imageTv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showImagePickDialog();
+            }
+        });
+
+        uploadBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //get data(title,description) from EditText
+                String title = titleEt.getText().toString();
+                String description = descriptionEt.getText().toString();
+                if(TextUtils.isEmpty(title)){
+                    Toast.makeText(AddPostActivity.this,"Enter title...",Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(TextUtils.isEmpty(description)){
+                    Toast.makeText(AddPostActivity.this,"Enter desc", Toast.LENGTH_SHORT);
+                    return;
+                }
+                if(image_rui==null){
+                    //post without image
+                    uploadData(title, description,"noImage");
+                }else{
+                    //post with image
+                    uploadData(title, description,String.valueOf(image_rui));
+
+                }
+            }
+        });
+    }
+
+    private void uploadData(String title, String description, String uri) {
+        pd.setMessage("Publishing post...");
+        pd.show();
+
+        //for post-image name,post-id, post-publish-time
+        String timeStamp = String.valueOf(System.currentTimeMillis());
+
+        String filePathAndName = "Post/"+"post_"+timeStamp;
+
+        if(!uri.equals("noImage")){
+            //post with image
+            StorageReference ref = FirebaseStorage.getInstance().getReference().child(filePathAndName);
+            ref.putFile(Uri.parse(uri)).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    //image is uploaded to firebase storage, now get it's uri
+                    Task<Uri> uriTask= taskSnapshot.getStorage().getDownloadUrl();
+                    while(!uriTask.isSuccessful());
+
+                    String downloadUri = uriTask.getResult().toString();
+
+                    if(uriTask.isSuccessful()){
+                        //url is received upload post to firebase database
+                        HashMap<Object, String> hashMap=new HashMap<>();
+                        //put post info
+                        hashMap.put("uid",uid);
+                        hashMap.put("uName",name);
+                        hashMap.put("uEmai",email);
+                        hashMap.put("uDp",dp);
+                        hashMap.put("pId",timeStamp);
+                        hashMap.put("pTitle",title);
+                        hashMap.put("pDescr",description);
+                        hashMap.put("pImage",downloadUri);
+                        hashMap.put("pTime",timeStamp);
+                        //path to store post data
+                        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
+                        //put data in this ref
+                        ref.child(timeStamp).setValue(hashMap)
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+                                        //added to database
+                                        pd.dismiss();
+                                        Toast.makeText(AddPostActivity.this,"Post published", Toast.LENGTH_SHORT).show();
+                                        //reset views
+                                        titleEt.setText("");
+                                        descriptionEt.setText("");
+                                        imageTv.setImageURI(null);
+                                        image_rui=null;
+                                    }
+                                }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull @NotNull Exception e) {
+                                        //failed addming post to database
+                                        pd.dismiss();
+                                        Toast.makeText(AddPostActivity.this,e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+
+                    }
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull @NotNull Exception e) {
+
+                }
+            });
+        }else{
+            //post without image
+            HashMap<Object, String> hashMap=new HashMap<>();
+            //put post info
+            hashMap.put("uid",uid);
+            hashMap.put("uName",name);
+            hashMap.put("uEmai",email);
+            hashMap.put("uDp",dp);
+            hashMap.put("pId",timeStamp);
+            hashMap.put("pTitle",title);
+            hashMap.put("pDescr",description);
+            hashMap.put("pImage","noImage");
+            hashMap.put("pTime",timeStamp);
+            //path to store post data
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
+            //put data in this ref
+            ref.child(timeStamp).setValue(hashMap)
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            //added to database
+                            pd.dismiss();
+                            Toast.makeText(AddPostActivity.this,"Post published", Toast.LENGTH_SHORT).show();
+                            //reset views
+                            titleEt.setText("");
+                            descriptionEt.setText("");
+                            imageTv.setImageURI(null);
+                            image_rui=null;
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull @NotNull Exception e) {
+                            //failed addming post to database
+                            pd.dismiss();
+                            Toast.makeText(AddPostActivity.this,e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        }
+    }
+
+    private void showImagePickDialog() {
+        //options (camera, gallery) to show in dialog
+        String[] options = {"Camera", "Gallery"};
+
+        //dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Choose Image from");
+        //set options to dialog
+        builder.setItems(options, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //item click handle
+                if (which == 0) {
+                    System.out.println("Camera");
+                    //camera clicked
+                    if (!checkCameraPermission()){
+                        requestCameraPermission();
+                    }else{
+                        pickFromCamera();
+                    }
+                }
+                if (which == 1) {
+                    System.out.println("Gallery");
+//                    if (!checkStoragePermission()){
+                        requestStoragePermission();
+//                    }else{
+                        pickFromGallery();
+//                    }
+                }
+            }
+        });
+        //create and show dialog
+        builder.create().show();
+    }
+
+    private void pickFromCamera() {
+    //intent to pick image from camera
+        ContentValues cv = new ContentValues();
+        cv.put(MediaStore.Images.Media.TITLE,"Temp Pick");
+        cv.put(MediaStore.Images.Media.DESCRIPTION,"Temp Desr");
+        image_rui = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
+        System.out.println("pick Camera");
+        Intent intent=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT,image_rui);
+        startActivityForResult(intent, IMAGE_PICK_CAMERA_CODE);
+    }
+
+    private void pickFromGallery() {
+        System.out.println("pick Gallery");
+
+        //intent to pick image from gallery
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("image/*");
+        startActivityForResult(intent,IMAGE_PICK_GALLERY_CODE);
+    }
+    private boolean checkStoragePermission() {
+        //check if storage permission is enabled or not
+        //return true if enabled
+        //return false if not enabled
+        boolean result = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == (PackageManager.PERMISSION_GRANTED);
+        return result;
+    }
+
+    private void requestStoragePermission() {
+        //request runtime storage permission
+        ActivityCompat.requestPermissions(this, storagePermissions, STORAGE_REQUEST_CODE);
+
+    }
+
+    private boolean checkCameraPermission() {
+        //check if camera permission is enabled or not
+        //return true if enabled
+        //return false if not enabled
+        boolean result = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == (PackageManager.PERMISSION_GRANTED);
+        return result;
+    }
+
+    private void requestCameraPermission() {
+        //request runtime camera permission
+        ActivityCompat.requestPermissions(this, cameraPermissions, CAMERA_REQUEST_CODE);
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        checkUserStatus();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkUserStatus();
+    }
+
+    private void checkUserStatus() {
+        //get current user
+        FirebaseUser user = firebaseAuth.getCurrentUser();
+        if (user != null) {
+            email = user.getEmail();
+            uid = user.getUid();
+        } else {
+            //user not signed in, go to main activity
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+        }
+    }
+
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        onBackPressed();//go to previous activiry
+        return super.onSupportNavigateUp();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        menu.findItem(R.id.action_add_post).setVisible(false);
+        menu.findItem(R.id.action_search).setVisible(false);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        //get item id
+        int id = item.getItemId();
+        if (id == R.id.action_logout) {
+            firebaseAuth.signOut();
+            checkUserStatus();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    //handle permission results
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull @NotNull String[] permissions, @NonNull @NotNull int[] grantResults) {
+
+        //this method is called when user press Allow or deny from permission request dialog
+        //here we will handle permission cases (allowed and denied)
+        switch (requestCode){
+            case CAMERA_REQUEST_CODE:{
+                System.out.println("CAMERA_REQUEST_CODE");
+                 if (grantResults.length>0){
+                     boolean cameraAccepted= grantResults[0] == PackageManager.PERMISSION_GRANTED;
+//                     boolean storageAccepted= grantResults[1] == PackageManager.PERMISSION_GRANTED;
+                     if(cameraAccepted ){
+                        //both permission are granted
+                         pickFromCamera();
+                     }
+                 }else{
+                     //camera or gallery or both permissions are denied
+                     Toast.makeText(this,"Camera & storage both permissions are neccessary",Toast.LENGTH_SHORT).show();
+                 }
+                 break;
+            }
+            case STORAGE_REQUEST_CODE:{
+                System.out.println("STORAGE_REQUEST_CODE");
+                if(grantResults.length>0){
+                    boolean storageAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                    if(storageAccepted){
+                        //storage permission granted
+                        pickFromGallery();
+                    }else{
+                        //camera or gallery or both permissions were denied
+                        Toast.makeText(this,"Storage permissions | neccessary...", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable @org.jetbrains.annotations.Nullable Intent data) {
+        //this method will be called after picking image from camera or gallery
+        if(resultCode == RESULT_OK){
+            if (requestCode == IMAGE_PICK_GALLERY_CODE){
+                //image is picked from gallery, get uri of image
+                image_rui=data.getData();
+
+                //set to imageview
+                imageTv.setImageURI(image_rui);
+            }
+            else if(requestCode== IMAGE_PICK_CAMERA_CODE){
+                //image is picked from camer, get uri of image
+
+                imageTv.setImageURI(image_rui);
+            }
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }

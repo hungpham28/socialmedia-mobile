@@ -1,14 +1,23 @@
 package com.team8.socialmedia.kone;
 
+import android.content.Intent;
 import android.os.Bundle;
 
+import android.text.TextUtils;
+import android.view.*;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
+import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
+import com.team8.socialmedia.vu.ModelUser;
+
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -26,6 +35,7 @@ public class ChatListFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
+    FirebaseAuth firebaseAuth;
     public ChatListFragment() {
         // Required empty public constructor
     }
@@ -55,12 +65,52 @@ public class ChatListFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+        setHasOptionsMenu(true);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_chat_list, container, false);
+        View view=inflater.inflate(R.layout.fragment_chat_list, container, false);
+        firebaseAuth = FirebaseAuth.getInstance();
+        return view;
+    }
+    private void checkUserStatus() {
+        //get current user
+        FirebaseUser user = firebaseAuth.getCurrentUser();
+        if (user != null) {
+            //user is signed in stay here
+            //set email of logged-in user
+        } else {
+            //user not signed in, go to main activity
+            startActivity(new Intent(getActivity(), MainActivity.class));
+            getActivity().finish();
+        }
+    }
+
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
+        //inflating menu
+        inflater.inflate(R.menu.menu_main, menu);
+
+        //hide addpost icon from this fragment
+        menu.findItem(R.id.action_add_post).setVisible(false);
+
+
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        //get item id
+        int id = item.getItemId();
+        if (id == R.id.action_logout) {
+            firebaseAuth.signOut();
+            checkUserStatus();
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
