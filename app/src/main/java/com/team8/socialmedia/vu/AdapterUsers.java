@@ -1,6 +1,7 @@
 package com.team8.socialmedia.vu;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.R;
+import com.team8.socialmedia.kone.ChatActivity;
 
 import java.util.List;
 
@@ -35,6 +37,7 @@ public class AdapterUsers extends RecyclerView.Adapter<AdapterUsers.MyHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull MyHolder holder, int position) {
+        String hisUID = userList.get(position).getUid();
         String userImage = userList.get(position).getImage();
         String userName = userList.get(position).getName();
         String userEmail = userList.get(position).getEmail();
@@ -50,7 +53,13 @@ public class AdapterUsers extends RecyclerView.Adapter<AdapterUsers.MyHolder> {
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(context, "" + userEmail, Toast.LENGTH_SHORT).show();
+//                Toast.makeText(context, "" + userEmail, Toast.LENGTH_SHORT).show();
+/*                - Click user from user list to start chatting/messaging
+                  - Start activity by putting UID of receiver
+                  - we'll use that UID to identify the we are gonna chat  */
+                Intent intent = new Intent(context, ChatActivity.class);
+                intent.putExtra("hisUid", hisUID);
+                context.startActivity(intent);
             }
         });
     }
