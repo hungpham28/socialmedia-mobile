@@ -18,6 +18,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
+import com.team8.socialmedia.hung.AddPostActivity;
 
 public class HomeFragment extends Fragment {
 
@@ -66,6 +67,9 @@ public class HomeFragment extends Fragment {
         if (id == R.id.action_logout) {
             firebaseAuth.signOut();
             checkUserStatus();
+        }
+        if(id==R.id.action_add_post){
+            startActivity(new Intent(getActivity(), AddPostActivity.class ));
         }
         return super.onOptionsItemSelected(item);
     }

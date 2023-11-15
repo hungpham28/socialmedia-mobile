@@ -138,7 +138,7 @@ public class LoginActivity extends AppCompatActivity {
                             public void onFailure(@NonNull Exception e) {
                                 // No saved credentials found. Launch the One Tap sign-up flow, or
                                 // do nothing and continue presenting the signed-out UI.
-
+                                Toast.makeText(LoginActivity.this,"No saved credentials found...",Toast.LENGTH_SHORT).show();
                             }
                         });
             }
