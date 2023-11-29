@@ -6,12 +6,9 @@
     tools:context=".vu.HomeFragment">
 
     <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/postsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:textAlignment="center"
-        android:text="Home"
-        android:textSize="30sp"
-        android:gravity="center" />
-
+        android:textAlignment="center"/>
 </FrameLayout>

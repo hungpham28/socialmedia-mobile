@@ -34,12 +34,22 @@ import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
+import com.team8.socialmedia.vu.ModelUser;
+import com.team8.socialmedia.vu.notifications.APIService;
+import com.team8.socialmedia.vu.notifications.Client;
+import com.team8.socialmedia.vu.notifications.Data;
+import com.team8.socialmedia.vu.notifications.Response;
+import com.team8.socialmedia.vu.notifications.Sender;
+import com.team8.socialmedia.vu.notifications.Token;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
 
 public class ChatActivity extends AppCompatActivity {
     //  View from xml
@@ -65,6 +75,8 @@ public class ChatActivity extends AppCompatActivity {
     String myUid;
     String hisImage;
 
+    APIService apiService;
+    boolean notify = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +104,9 @@ public class ChatActivity extends AppCompatActivity {
 
         /*          On Clicking user from users list we have passed that user's UID using intent
          *          So get that uid here to get the profile picture, name and start chat with that user   */
+
+        apiService = Client.getRetrofit("https://fcm.googleapis.com/").create(APIService.class);
+
         Intent intent = getIntent();
         hisUid = intent.getStringExtra("hisUid");
 
@@ -116,22 +131,20 @@ public class ChatActivity extends AppCompatActivity {
                     String typingStatus = "" + ds.child("typingTo").getValue();
 
                     //Check typing status
-                    if (typingStatus.equals(myUid)){
+                    if (typingStatus.equals(myUid)) {
                         userStatusTv.setText("typing...");
-                    }
-                    else{
+                    } else {
                         //Get value of onlinestatus
                         String onlineStatus = "" + ds.child("onlineStatus").getValue();
-                        if (onlineStatus.equals("online")){
+                        if (onlineStatus.equals("online")) {
                             userStatusTv.setText(onlineStatus);
-                        }
-                        else{
+                        } else {
                             //convert timestamp to proper time data
                             //convert time stamp to dd/mm/yyyy hh:mm am/pm
                             Calendar cal = Calendar.getInstance(Locale.US);
                             cal.setTimeInMillis(Long.parseLong(onlineStatus));
                             String dateTime = DateFormat.format("dd/MM/yyyy hh:mm aa", cal).toString();
-                            userStatusTv.setText("Lat seen at: "+ dateTime);
+                            userStatusTv.setText("Lat seen at: " + dateTime);
 
                         }
                     }
@@ -159,17 +172,19 @@ public class ChatActivity extends AppCompatActivity {
         sendBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                notify = true;
+
                 //get text from edit text
                 String message = messageEt.getText().toString().trim();
                 //Check if text is empty or not
                 if (TextUtils.isEmpty(message)) {
                     //text empty
                     Toast.makeText(ChatActivity.this, "Can't send the empty message...", Toast.LENGTH_SHORT).show();
-                }
-                else {
+                } else {
                     //text not empty
                     sendMessage(message);
                 }
+                messageEt.setText("");
             }
         });
         //Check edit text change listener
@@ -181,7 +196,7 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if(s.toString().trim().length() ==0){
+                if (s.toString().trim().length() == 0) {
                     checkTypingStatus(hisUid);//uid of receiver
                 }
 
@@ -268,6 +283,62 @@ public class ChatActivity extends AppCompatActivity {
         databaseReference.child("Chats").push().setValue(hashMap);
         //Reset edittext after sending message
         messageEt.setText("");
+
+        String msg = message;
+        DatabaseReference database = FirebaseDatabase.getInstance().getReference("Users").child(myUid);
+        database.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                ModelUser user = snapshot.getValue(ModelUser.class);
+                if (notify) {
+                    senNotification(hisUid, user.getName(), message);
+                }
+                notify = false;
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    private void senNotification(String hisUid, String name, String message) {
+        DatabaseReference allTokens = FirebaseDatabase.getInstance().getReference("Tokens");
+        Query query = allTokens.orderByKey().equalTo(hisUid);
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    Token token = ds.getValue(Token.class);
+                    Data data = new Data(
+                            myUid,
+                            name + ":" + message,
+                            "New Message",
+                            hisUid,
+                            R.drawable.ic_face_light
+                    );
+                    Sender sender = new Sender(data, token.getToken());
+                    apiService.sendNotification(sender)
+                            .enqueue(new Callback<Response>() {
+                                @Override
+                                public void onResponse(Call<Response> call, retrofit2.Response<Response> response) {
+                                    Toast.makeText(ChatActivity.this, response.message(), Toast.LENGTH_SHORT).show();
+                                }
+
+                                @Override
+                                public void onFailure(Call<Response> call, Throwable t) {
+
+                                }
+                            });
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     private void checkUserStatus() {
@@ -283,7 +354,8 @@ public class ChatActivity extends AppCompatActivity {
             finish();
         }
     }
-    private void checkOnlineStatus(String status){
+
+    private void checkOnlineStatus(String status) {
         DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("Users").child(myUid);
         HashMap<String, Object> hashMap = new HashMap<>();
         hashMap.put("onlineStatus", status);
@@ -292,7 +364,7 @@ public class ChatActivity extends AppCompatActivity {
         dbRef.updateChildren(hashMap);
     }
 
-    private void checkTypingStatus(String typing){
+    private void checkTypingStatus(String typing) {
         DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("Users").child(myUid);
         HashMap<String, Object> hashMap = new HashMap<>();
         hashMap.put("typingTo", typing);
@@ -335,6 +407,7 @@ public class ChatActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_main, menu);
 //      Hide searchview, as we dont need it here
         menu.findItem(R.id.action_search).setVisible(false);
+        menu.findItem(R.id.action_add_post).setVisible(false);
 
         return super.onCreateOptionsMenu(menu);
     }
