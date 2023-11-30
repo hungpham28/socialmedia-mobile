@@ -3,19 +3,27 @@ package com.team8.socialmedia.kone;
 import com.google.firebase.database.PropertyName;
 
 public class ModelChat {
-    String message, receiver, sender, timestamp;
+    String message, receiver, sender, timestamp, type;
     boolean isSeen;
+    public ModelChat() {
 
-    public ModelChat(String message, String receiver, String sender, String timestamp, boolean isSeen) {
+    }
+
+    public ModelChat(String message, String receiver, String sender, String timestamp, String type, boolean isSeen) {
         this.message = message;
         this.receiver = receiver;
         this.sender = sender;
         this.timestamp = timestamp;
+        this.type = type;
         this.isSeen = isSeen;
     }
 
-    public ModelChat() {
+    public String getType() {
+        return type;
+    }
 
+    public void setType(String type) {
+        this.type = type;
     }
     @PropertyName("message")
     public String getMessage() {
@@ -42,7 +50,7 @@ public class ModelChat {
         this.sender = sender;
     }
     @PropertyName("timestamp")
-    public String getTimetamp() {
+    public String getTimeStamp() {
         return timestamp;
     }
     @PropertyName("timestamp")

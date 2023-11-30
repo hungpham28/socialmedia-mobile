@@ -1,13 +1,25 @@
 package com.team8.socialmedia.kone;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -23,6 +35,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -31,9 +46,13 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
+import com.team8.socialmedia.hung.AddPostActivity;
 import com.team8.socialmedia.vu.ModelUser;
 import com.team8.socialmedia.vu.notifications.APIService;
 import com.team8.socialmedia.vu.notifications.Client;
@@ -42,6 +61,11 @@ import com.team8.socialmedia.vu.notifications.Response;
 import com.team8.socialmedia.vu.notifications.Sender;
 import com.team8.socialmedia.vu.notifications.Token;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -58,7 +82,7 @@ public class ChatActivity extends AppCompatActivity {
     ImageView profileIv;
     TextView nameTv, userStatusTv;
     EditText messageEt;
-    ImageButton sendBtn;
+    ImageButton sendBtn, attachBtn;
     //    Firebase auth
     FirebaseAuth firebaseAuth;
     FirebaseDatabase firebaseDatabase;
@@ -78,6 +102,23 @@ public class ChatActivity extends AppCompatActivity {
     APIService apiService;
     boolean notify = false;
 
+    //permisstions constants
+    private static final int CAMERA_REQUEST_CODE = 100;
+    private static final int STORAGE_REQUEST_CODE = 200;
+    //image pick constants
+    private static final int IMAGE_PICK_CAMERA_CODE = 300;
+    private static final int IMAGE_PICK_GALLERY_CODE = 400;
+
+    //permissions array
+    String[] cameraPermissions;
+    String[] storagePermissions;
+    //image picked will be samed in this uri
+    Uri image_rui=null;
+    String name, email, uid, dp;
+    EditText titleEt, descriptionEt;
+    ImageView imageTv;
+    private android.app.AlertDialog pd;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,6 +134,11 @@ public class ChatActivity extends AppCompatActivity {
         userStatusTv = findViewById(R.id.chat_userStatusTv);
         messageEt = findViewById(R.id.chat_messageEt);
         sendBtn = findViewById(R.id.chat_sendBtn);
+        attachBtn = findViewById(R.id.attachBtn);
+
+        //init permissions array
+        cameraPermissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        storagePermissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
         //Layout (LinearLayout) for RecyclerView
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
@@ -187,6 +233,17 @@ public class ChatActivity extends AppCompatActivity {
                 messageEt.setText("");
             }
         });
+        //click button to send image
+        attachBtn.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                showImagePickDialog();
+
+            }
+        });
+
+
         //Check edit text change listener
         messageEt.addTextChangedListener(new TextWatcher() {
             @Override
@@ -213,6 +270,191 @@ public class ChatActivity extends AppCompatActivity {
         seenMessage();
     }
 
+    private void uploadData(String title, String description, String uri) {
+        pd.setMessage("Publishing post...");
+        pd.show();
+
+        //for post-image name,post-id, post-publish-time
+        String timeStamp = String.valueOf(System.currentTimeMillis());
+
+        String filePathAndName = "Post/"+"post_"+timeStamp;
+
+        if(!uri.equals("noImage")){
+            //post with image
+            StorageReference ref = FirebaseStorage.getInstance().getReference().child(filePathAndName);
+            ref.putFile(Uri.parse(uri)).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    //image is uploaded to firebase storage, now get it's uri
+                    Task<Uri> uriTask= taskSnapshot.getStorage().getDownloadUrl();
+                    while(!uriTask.isSuccessful());
+
+                    String downloadUri = uriTask.getResult().toString();
+
+                    if(uriTask.isSuccessful()){
+                        //url is received upload post to firebase database
+                        HashMap<Object, String> hashMap=new HashMap<>();
+                        //put post info
+                        hashMap.put("uid",uid);
+                        hashMap.put("uName",name);
+                        hashMap.put("uEmai",email);
+                        hashMap.put("uDp",dp);
+                        hashMap.put("pId",timeStamp);
+                        hashMap.put("pTitle",title);
+                        hashMap.put("pDescr",description);
+                        hashMap.put("pImage",downloadUri);
+                        hashMap.put("pTime",timeStamp);
+                        //path to store post data
+                        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
+                        //put data in this ref
+                        ref.child(timeStamp).setValue(hashMap)
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+                                        //added to database
+                                        pd.dismiss();
+                                        Toast.makeText(ChatActivity.this,"Post published", Toast.LENGTH_SHORT).show();
+                                        //reset views
+                                        titleEt.setText("");
+                                        descriptionEt.setText("");
+                                        imageTv.setImageURI(null);
+                                        image_rui=null;
+                                    }
+                                }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull @NotNull Exception e) {
+                                        //failed addming post to database
+                                        pd.dismiss();
+                                        Toast.makeText(ChatActivity.this,e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+
+                    }
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull @NotNull Exception e) {
+
+                }
+            });
+        }else{
+            //post without image
+            HashMap<Object, String> hashMap=new HashMap<>();
+            //put post info
+            hashMap.put("uid",uid);
+            hashMap.put("uName",name);
+            hashMap.put("uEmai",email);
+            hashMap.put("uDp",dp);
+            hashMap.put("pId",timeStamp);
+            hashMap.put("pTitle",title);
+            hashMap.put("pDescr",description);
+            hashMap.put("pImage","noImage");
+            hashMap.put("pTime",timeStamp);
+            //path to store post data
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
+            //put data in this ref
+            ref.child(timeStamp).setValue(hashMap)
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            //added to database
+                            pd.dismiss();
+                            Toast.makeText(ChatActivity.this,"Post published", Toast.LENGTH_SHORT).show();
+                            //reset views
+                            titleEt.setText("");
+                            descriptionEt.setText("");
+                            imageTv.setImageURI(null);
+                            image_rui=null;
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull @NotNull Exception e) {
+                            //failed addming post to database
+                            pd.dismiss();
+                            Toast.makeText(ChatActivity.this,e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        }
+    }
+
+    private void showImagePickDialog() {
+        //options (camera, gallery) to show in dialog
+        String[] options = {"Camera", "Gallery"};
+
+        //dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Choose Image from");
+        //set options to dialog
+        builder.setItems(options, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //item click handle
+                if (which == 0) {
+                    System.out.println("Camera");
+                    //camera clicked
+                    if (!checkCameraPermission()){
+                        requestCameraPermission();
+                    }else{
+                        pickFromCamera();
+                    }
+                }
+                if (which == 1) {
+                    System.out.println("Gallery");
+//                    if (!checkStoragePermission()){
+                    requestStoragePermission();
+//                    }else{
+                    pickFromGallery();
+//                    }
+                }
+            }
+        });
+        //create and show dialog
+        builder.create().show();
+    }
+
+    private void requestCameraPermission() {
+
+    }
+
+    private boolean checkCameraPermission() {
+        return false;
+    }
+
+    private void pickFromCamera() {
+        //intent to pick image from camera
+        ContentValues cv = new ContentValues();
+        cv.put(MediaStore.Images.Media.TITLE,"Temp Pick");
+        cv.put(MediaStore.Images.Media.DESCRIPTION,"Temp Desr");
+        image_rui = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
+        System.out.println("pick Camera");
+        Intent intent=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT,image_rui);
+        startActivityForResult(intent, IMAGE_PICK_CAMERA_CODE);
+    }
+
+    private void pickFromGallery() {
+        System.out.println("pick Gallery");
+
+        //intent to pick image from gallery
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("image/*");
+        startActivityForResult(intent,IMAGE_PICK_GALLERY_CODE);
+    }
+    private boolean checkStoragePermission() {
+        //check if storage permission is enabled or not
+        //return true if enabled
+        //return false if not enabled
+        boolean result = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == (PackageManager.PERMISSION_GRANTED);
+        return result;
+    }
+
+    private void requestStoragePermission() {
+        //request runtime storage permission
+        ActivityCompat.requestPermissions(this, storagePermissions, STORAGE_REQUEST_CODE);
+
+    }
+
     private void seenMessage() {
         userRefForSeen = FirebaseDatabase.getInstance().getReference("Chats");
         seenListener = userRefForSeen.addValueEventListener(new ValueEventListener() {
@@ -233,6 +475,8 @@ public class ChatActivity extends AppCompatActivity {
 
             }
         });
+
+
     }
 
     private void readMessages() {
@@ -263,7 +507,7 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    private void sendMessage(String message) {
+    private void sendMessage(final String message) {
         /*"Chats" node will be created that will contain all chats
          * Whenever user sands message it will create new child in "chats" node nad that child will contain
          * the following key values
@@ -280,12 +524,13 @@ public class ChatActivity extends AppCompatActivity {
         hashMap.put("message", message);
         hashMap.put("timestamp", timestamp);
         hashMap.put("isSeen", false);
+        hashMap.put("type", "image");
         databaseReference.child("Chats").push().setValue(hashMap);
         //Reset edittext after sending message
         messageEt.setText("");
 
         String msg = message;
-        DatabaseReference database = FirebaseDatabase.getInstance().getReference("Users").child(myUid);
+        final DatabaseReference database = FirebaseDatabase.getInstance().getReference("Users").child(myUid);
         database.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -301,6 +546,157 @@ public class ChatActivity extends AppCompatActivity {
 
             }
         });
+        //    create chatlist node/child in firebase database
+        final DatabaseReference chatRef1 = FirebaseDatabase.getInstance().getReference("Chatlist")
+                .child(myUid)
+                .child(hisUid);
+
+        chatRef1.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if(!snapshot.exists()){
+                    chatRef1.child("id").setValue(hisUid);
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+        final DatabaseReference chatRef2 = FirebaseDatabase.getInstance().getReference("Chatlist")
+                .child(hisUid)
+                .child(myUid);
+
+        chatRef2.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if(!snapshot.exists()){
+                    chatRef2.child("id").setValue(myUid);
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+
+    }
+
+    private void sendImageMessage(Uri imageRui) throws IOException {
+        notify = true;
+        //progress dialog
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Sending image...");
+        progressDialog.show();
+
+        String timeStamp = "" + System.currentTimeMillis();
+
+        String fileNameAndPath = "ChatImages/" + "post/" + timeStamp;
+
+        //get bitmap from image uri
+        Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), image_rui);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        byte[] data = baos.toByteArray(); //conver image to bytes
+        StorageReference ref = FirebaseStorage.getInstance().getReference().child(fileNameAndPath);
+        ref.putBytes(data)
+                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        //image updated
+                        progressDialog.dismiss();
+                        //get url of uploaded image
+                        Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
+                        while (!uriTask.isSuccessful());
+                        String downloadUri = uriTask.getResult().toString();
+
+                        if(uriTask.isSuccessful()){
+                            //add image uri and other info to database
+                            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+                            //set reuired data
+                            HashMap<String, Object> hashMap = new HashMap<>();
+                            hashMap.put("sender", myUid);
+                            hashMap.put("receiver", myUid);
+                            hashMap.put("message", downloadUri);
+                            hashMap.put("timestamp", timeStamp);
+                            hashMap.put("type", "image");
+                            hashMap.put("isSeen", false);
+                            //put this data to firebease
+                            databaseReference.child("Chats").push().setValue(hashMap);
+
+                            //send notification
+                            DatabaseReference database = FirebaseDatabase.getInstance().getReference("Users").child(myUid);
+                            database.addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    ModelUser user = snapshot.getValue(ModelUser.class);
+                                    if (notify){
+                                        senNotification(hisUid, user.getName(),"Sent you a photo...");
+                                    }
+                                    notify = false;
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            });
+
+                            //    create chatlist node/child in firebase database
+                            final DatabaseReference chatRef1 = FirebaseDatabase.getInstance().getReference("Chatlist")
+                                    .child(myUid)
+                                    .child(hisUid);
+
+                            chatRef1.addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if(!snapshot.exists()){
+                                        chatRef1.child("id").setValue(hisUid);
+                                    }
+
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            });
+
+                            final DatabaseReference chatRef2 = FirebaseDatabase.getInstance().getReference("Chatlist")
+                                    .child(hisUid)
+                                    .child(myUid);
+
+                            chatRef2.addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    if(!snapshot.exists()){
+                                        chatRef2.child("id").setValue(myUid);
+                                    }
+
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            });
+
+                        }
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        //failed
+                        progressDialog.dismiss();
+                    }
+                });
     }
 
     private void senNotification(String hisUid, String name, String message) {
@@ -401,6 +797,76 @@ public class ChatActivity extends AppCompatActivity {
         checkOnlineStatus("online");
         super.onResume();
     }
+
+    //handle permission results
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull @NotNull String[] permissions, @NonNull @NotNull int[] grantResults) {
+
+        //this method is called when user press Allow or deny from permission request dialog
+        //here we will handle permission cases (allowed and denied)
+        switch (requestCode){
+            case CAMERA_REQUEST_CODE:{
+                System.out.println("CAMERA_REQUEST_CODE");
+                if (grantResults.length>0){
+                    boolean cameraAccepted= grantResults[0] == PackageManager.PERMISSION_GRANTED;
+//                     boolean storageAccepted= grantResults[1] == PackageManager.PERMISSION_GRANTED;
+                    if(cameraAccepted ){
+                        //both permission are granted
+                        pickFromCamera();
+                    }
+                }else{
+                    //camera or gallery or both permissions are denied
+                    Toast.makeText(this,"Camera & storage both permissions are neccessary",Toast.LENGTH_SHORT).show();
+                }
+                break;
+            }
+            case STORAGE_REQUEST_CODE:{
+                System.out.println("STORAGE_REQUEST_CODE");
+                if(grantResults.length>0){
+                    boolean storageAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                    if(storageAccepted){
+                        //storage permission granted
+                        pickFromGallery();
+                    }else{
+                        //camera or gallery or both permissions were denied
+                        Toast.makeText(this,"Storage permissions | neccessary...", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable @org.jetbrains.annotations.Nullable Intent data) {
+        //this method will be called after picking image from camera or gallery
+        if(resultCode == RESULT_OK){
+            if (requestCode == IMAGE_PICK_GALLERY_CODE){
+                //image is picked from gallery, get uri of image
+                image_rui=data.getData();
+
+                //use this image uri to upload to firebase storegae
+                try {
+                    sendImageMessage(image_rui);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            else if(requestCode== IMAGE_PICK_CAMERA_CODE){
+                //image is picked from camer, get uri of image
+                try {
+                    sendImageMessage(image_rui);
+                } catch (IOException e) {
+                    e.printStackTrace();;
+                }
+
+            }
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

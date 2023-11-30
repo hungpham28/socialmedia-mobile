@@ -72,7 +72,15 @@
         android:background="@color/white"
         android:gravity="center"
         android:orientation="horizontal">
-        
+
+    <!--    ImageButton: to sender Image-->
+        <ImageButton
+            android:id="@+id/attachBtn"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@null"
+            android:src="@drawable/ic_attach_black"/>
+
     <!--    EditText: input message-->
         <EditText
             android:id="@+id/chat_messageEt"
