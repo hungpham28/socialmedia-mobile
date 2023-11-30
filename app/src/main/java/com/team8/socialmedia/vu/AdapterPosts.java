@@ -24,7 +24,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.*;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
@@ -46,10 +52,11 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
 
     Context context;
     List<ModelPost> postList;
+    String myUid;
     boolean mProcessLike =false;
     private DatabaseReference likesRef;
     private DatabaseReference postsRef;
-    String myUid;
+
 
     public AdapterPosts(Context context, List<ModelPost> postList) {
         this.context = context;
@@ -80,6 +87,7 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
         String pLikes = postList.get(position).getpLikes();
         String pComments = postList.get(position).getpComments();
 
+
         Calendar calendar = Calendar.getInstance(Locale.getDefault());
         calendar.setTimeInMillis(Long.parseLong(pTimeStamp));
         String pTime = DateFormat.format("dd/MM/yyyy hh:mm aa", calendar).toString();
@@ -91,6 +99,7 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
         holder.pDescriptionTv.setText(pDescription);
         holder.pLikesTv.setText(pLikes+" Likes");
         holder.pCommentsTv.setText(pComments+" Comments");
+
 
         setLikes(holder,pId);
         try {
@@ -139,6 +148,7 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
                             postsRef.child(postIde).child("pLikes").setValue(""+(pLikes+1));
                             likesRef.child(postIde).child(myUid).setValue("Liked");
                             mProcessLike=false;
+
                         }
                     }
 
@@ -179,18 +189,18 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
     }
 
     private void setLikes(MyHolder holder, String postKey) {
+
         likesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@androidx.annotation.NonNull @NotNull DataSnapshot snapshot) {
                 if(snapshot.child(postKey).hasChild(myUid)){
                     //user has liked this post
-
-                    holder.likeBtn.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_liked,0,0,0);
+                    holder.likeBtn.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_liked, 0, 0, 0);
                     holder.likeBtn.setText("Liked");
                 }else {
                     //user has not liked this post
-
-                    holder
+                    holder.likeBtn.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_like_black, 0, 0, 0);
+                    holder.likeBtn.setText("Like");
                 }
             }
 
@@ -198,7 +208,8 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
             public void onCancelled(@androidx.annotation.NonNull @NotNull DatabaseError error) {
 
             }
-        })
+        });
+
     }
 
     private void showMoreOptions(ImageButton moreBtn, String uid, String myUid, String pId, String pImage) {
@@ -222,8 +233,8 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
                 }
                 if (id == 1) {
                     Intent intent = new Intent(context, AddPostActivity.class);
-                    intent.putExtra("key","editPost");
-                    intent.putExtra("editPostId",pId);
+                    intent.putExtra("key", "editPost");
+                    intent.putExtra("editPostId", pId);
                     context.startActivity(intent);
                 }else if (id==2){
                     Intent intent=new Intent(context, PostDetailActivity.class);

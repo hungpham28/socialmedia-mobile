@@ -2,8 +2,12 @@ package com.team8.socialmedia.hung;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Color;
+import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
+import android.text.style.ForegroundColorSpan;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,6 +21,8 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
@@ -28,7 +34,8 @@ import java.util.Locale;
 
 public class PostDetailActivity extends AppCompatActivity {
     //to get data of user and post
-    String myUid, myEmail, myName, myDp, postId, pLikes, hisDp, hisName;
+    String myUid, myEmail, myName, myDp, postId, pLikes, pImage,
+            hisDp, hisName,hisUid;
 
     boolean mProcessComment = false;
     boolean mProcessLike = false;
@@ -105,6 +112,111 @@ public class PostDetailActivity extends AppCompatActivity {
                 likePost();
             }
         });
+
+        //more button click handle
+        moreBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showMoreOptions();
+
+            }
+        });
+    }
+
+    private void showMoreOptions() {
+        PopupMenu popupMenu = new PopupMenu(this, moreBtn, Gravity.END);
+        if (hisUid.equals(myUid)) {
+            SpannableString s = new SpannableString("Delete");
+            s.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s.length(), 0);
+            SpannableString s1 = new SpannableString("Edit");
+            s.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s.length(), 0);
+            popupMenu.getMenu().add(Menu.NONE, 0, 0, s);
+            popupMenu.getMenu().add(Menu.NONE, 1, 0, s1);
+        }
+
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                int id = item.getItemId();
+                if (id == 0) {
+                    beginDelete();
+                }
+                if (id == 1) {
+                    Intent intent = new Intent(PostDetailActivity.this, AddPostActivity.class);
+                    intent.putExtra("key", "editPost");
+                    intent.putExtra("editPostId", postId);
+                    startActivity(intent);
+                }
+
+                return false;
+            }
+        });
+        popupMenu.show();
+    }
+
+    private void beginDelete() {
+        if (pImage.equals("noImage")) {
+            deleteWithoutImage();
+        } else {
+            deleteWithImage();
+        }
+    }
+
+    private void deleteWithImage() {
+        final ProgressDialog pd = new ProgressDialog(PostDetailActivity.this);
+        pd.setMessage("Deleting...");
+
+        StorageReference picRef = FirebaseStorage.getInstance().getReferenceFromUrl(pImage);
+        picRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void unused) {
+                Query fquery = FirebaseDatabase.getInstance().getReference("Posts").orderByChild("pId").equalTo(postId);
+                fquery.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@androidx.annotation.NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            ds.getRef().removeValue();
+                        }
+                        Toast.makeText(PostDetailActivity.this, "Deleted successfully", Toast.LENGTH_SHORT).show();
+                        pd.dismiss();
+                    }
+
+                    @Override
+                    public void onCancelled(@androidx.annotation.NonNull DatabaseError error) {
+
+                    }
+                });
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@androidx.annotation.NonNull Exception e) {
+                pd.dismiss();
+                Toast.makeText(PostDetailActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
+
+    private void deleteWithoutImage() {
+        final ProgressDialog pd = new ProgressDialog(PostDetailActivity.this);
+        pd.setMessage("Deleting...");
+
+        Query fquery = FirebaseDatabase.getInstance().getReference("Posts").orderByChild("pId").equalTo(postId);
+        fquery.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@androidx.annotation.NonNull DataSnapshot snapshot) {
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    ds.getRef().removeValue();
+                }
+                Toast.makeText(PostDetailActivity.this, "Deleted successfully", Toast.LENGTH_SHORT).show();
+                pd.dismiss();
+            }
+
+            @Override
+            public void onCancelled(@androidx.annotation.NonNull DatabaseError error) {
+
+            }
+        });
     }
 
     private void setLikes() {
@@ -112,15 +224,23 @@ public class PostDetailActivity extends AppCompatActivity {
 
         likesRef.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
-                if(snapshot.child(postKey).hasChild(myUid))
+            public void onDataChange(@androidx.annotation.NonNull @NotNull DataSnapshot snapshot) {
+                if(snapshot.child(postId).hasChild(myUid)){
+                    //user has liked this post
+                    likeBtn.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_liked, 0, 0, 0);
+                    likeBtn.setText("Liked");
+                }else {
+                    //user has not liked this post
+                    likeBtn.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_like_black, 0, 0, 0);
+                    likeBtn.setText("Like");
+                }
             }
 
             @Override
-            public void onCancelled(@NonNull @NotNull DatabaseError error) {
+            public void onCancelled(@androidx.annotation.NonNull @NotNull DatabaseError error) {
 
             }
-        })
+        });
     }
 
     private void likePost() {
@@ -266,9 +386,9 @@ public class PostDetailActivity extends AppCompatActivity {
                     String pDescr = "" + ds.child("pDescr").getValue();
                     pLikes = "" + ds.child("pLikes").getValue();
                     String pTimeStamp = "" + ds.child("pTime").getValue();
-                    String pImage = "" + ds.child("pImage").getValue();
+                    pImage = "" + ds.child("pImage").getValue();
                     hisDp = "" + ds.child("uDp").getValue();
-                    String uid = "" + ds.child("uid").getValue();
+                    hisUid = "" + ds.child("uid").getValue();
                     String uEmail = "" + ds.child("uEmail").getValue();
                     hisName = "" + ds.child("uName").getValue();
                     String commentCount = "" + ds.child("pComments").getValue();

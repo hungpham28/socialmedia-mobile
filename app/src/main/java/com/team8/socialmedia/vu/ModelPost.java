@@ -59,6 +59,7 @@ public class ModelPost {
         this.pComments = pComments;
     }
 
+
     public String getpImage() {
         return pImage;
     }
