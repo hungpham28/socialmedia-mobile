@@ -16,6 +16,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -26,11 +28,11 @@ import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
+import com.team8.socialmedia.hung.adapters.AdapterComments;
+import com.team8.socialmedia.hung.models.ModelComment;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Locale;
+import java.util.*;
 
 public class PostDetailActivity extends AppCompatActivity {
     //to get data of user and post
@@ -46,7 +48,10 @@ public class PostDetailActivity extends AppCompatActivity {
     ImageButton moreBtn;
     Button likeBtn, shareBtn;
     LinearLayout profileLayout;
+    RecyclerView recyclerView;
 
+    List<ModelComment> commentList;
+    AdapterComments adapterComments;
     //add comments views
     EditText commentEt;
     ImageButton sendBtn;
@@ -85,6 +90,7 @@ public class PostDetailActivity extends AppCompatActivity {
         cAvatarIv = findViewById(R.id.cAvatarIv);
 
         profileLayout = findViewById(R.id.profileLayout);
+        recyclerView = findViewById(R.id.commentRecyclerView);
 
         loadPostInfo();
 
@@ -93,6 +99,8 @@ public class PostDetailActivity extends AppCompatActivity {
         loadUserInfo();
 
         setLikes();
+
+        loadComments();
 
         //set subtitle of actionbar
         actionBar.setSubtitle("SignedIn as: " + myEmail);
@@ -121,6 +129,42 @@ public class PostDetailActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private void loadComments() {
+        //layout (linear) for recyclerview
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
+        //set layout to recyclerview
+        recyclerView.setLayoutManager(layoutManager);
+
+        //init comments list
+        commentList = new ArrayList<>();
+
+        //path of the posts, to get its comments
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts").child(postId).child("Comments");
+        ref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+                System.out.println("get comments");
+                commentList.clear();
+                for (DataSnapshot ds: snapshot.getChildren()){
+                    ModelComment modelComment = ds.getValue(ModelComment.class);
+                    commentList.add(modelComment);
+
+                }
+                System.out.println(commentList.size());
+                //setup adapter
+                adapterComments = new AdapterComments(getApplicationContext(),commentList);
+                //set adapter
+                recyclerView.setAdapter(adapterComments);
+            }
+
+            @Override
+            public void onCancelled(@NonNull @NotNull DatabaseError error) {
+
+            }
+        });
+
     }
 
     private void showMoreOptions() {
