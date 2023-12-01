@@ -32,6 +32,7 @@ import com.google.firebase.ktx.Firebase;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
 import com.team8.socialmedia.hung.DashboardActivity;
+import com.team8.socialmedia.hung.SettingsActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -187,6 +188,9 @@ public class UsersFragment extends Fragment {
         if (id == R.id.action_logout) {
             firebaseAuth.signOut();
             checkUserStatus();
+        }else if(id==R.id.action_settings){
+            //go to settings activity
+            startActivity(new Intent(getActivity(), SettingsActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }

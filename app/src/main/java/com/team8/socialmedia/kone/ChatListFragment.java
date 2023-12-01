@@ -15,6 +15,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
+import com.team8.socialmedia.hung.SettingsActivity;
 import com.team8.socialmedia.vu.ModelUser;
 
 import java.util.List;
@@ -110,6 +111,9 @@ public class ChatListFragment extends Fragment {
         if (id == R.id.action_logout) {
             firebaseAuth.signOut();
             checkUserStatus();
+        }else if(id==R.id.action_settings){
+            //go to settings activity
+            startActivity(new Intent(getActivity(), SettingsActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }
