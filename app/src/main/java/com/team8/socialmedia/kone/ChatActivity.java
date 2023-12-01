@@ -23,6 +23,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -31,25 +37,20 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
 import com.team8.socialmedia.vu.ModelUser;
-import com.team8.socialmedia.vu.notifications.APIService;
-import com.team8.socialmedia.vu.notifications.Client;
+//import com.team8.socialmedia.vu.notifications.APIService;
+//import com.team8.socialmedia.vu.notifications.Client;
 import com.team8.socialmedia.vu.notifications.Data;
-import com.team8.socialmedia.vu.notifications.Response;
 import com.team8.socialmedia.vu.notifications.Sender;
 import com.team8.socialmedia.vu.notifications.Token;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-
-import retrofit2.Call;
-import retrofit2.Callback;
+import java.util.*;
 
 public class ChatActivity extends AppCompatActivity {
     //  View from xml
@@ -75,8 +76,8 @@ public class ChatActivity extends AppCompatActivity {
     String myUid;
     String hisImage;
 
-    APIService apiService;
-    boolean notify = false;
+    private RequestQueue requestQueue;
+    private boolean notify = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +95,7 @@ public class ChatActivity extends AppCompatActivity {
         messageEt = findViewById(R.id.chat_messageEt);
         sendBtn = findViewById(R.id.chat_sendBtn);
 
+        requestQueue= Volley.newRequestQueue(getApplicationContext());
         //Layout (LinearLayout) for RecyclerView
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setStackFromEnd(true);
@@ -105,7 +107,6 @@ public class ChatActivity extends AppCompatActivity {
         /*          On Clicking user from users list we have passed that user's UID using intent
          *          So get that uid here to get the profile picture, name and start chat with that user   */
 
-        apiService = Client.getRetrofit("https://fcm.googleapis.com/").create(APIService.class);
 
         Intent intent = getIntent();
         hisUid = intent.getStringExtra("hisUid");
@@ -313,24 +314,44 @@ public class ChatActivity extends AppCompatActivity {
                     Token token = ds.getValue(Token.class);
                     Data data = new Data(
                             myUid,
-                            name + ":" + message,
+                            name + ": " + message,
                             "New Message",
                             hisUid,
+                            "ChatNotification",
                             R.drawable.ic_face_light
                     );
                     Sender sender = new Sender(data, token.getToken());
-                    apiService.sendNotification(sender)
-                            .enqueue(new Callback<Response>() {
-                                @Override
-                                public void onResponse(Call<Response> call, retrofit2.Response<Response> response) {
-                                    Toast.makeText(ChatActivity.this, response.message(), Toast.LENGTH_SHORT).show();
-                                }
+                    //fcm json object
+                    try {
+                        JSONObject senderJsonObj=new JSONObject(new Gson().toJson(sender));
+                        JsonObjectRequest jsonObjectRequest=new JsonObjectRequest("https://fcm.googleapis.com/fcm/send", senderJsonObj,
+                                new Response.Listener<JSONObject>() {
+                                    @Override
+                                    public void onResponse(JSONObject response) {
+                                        //response of the request
+                                        Log.d("JSON_RESPONSE","onResponse: "+response.toString());
+                                    }
+                                }, new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                Log.d("JSON_REPONSE", "onResponse: "+error.toString());
+                            }
+                        }){
+                            @Override
+                            public Map<String, String> getHeaders() throws AuthFailureError {
+                                //put params
+                                Map<String, String> headers=new HashMap<>();
+                                headers.put("Content-Type","application/json");
+                                headers.put("Authorization","key=AAAAloT5Lsw:APA91bGTjwvNeps0eEuuC-TLC1LLyTt3vqmovmpf8LCuOKxGzZ4wy9VmNCHnlhmQ5XN4FySrjVsfBU398kvNL_F4umPVCxqy3aamtKBM-Vuex4Bn5TMrFUSRcQhANP_9fKIXEdzpMD9i");
 
-                                @Override
-                                public void onFailure(Call<Response> call, Throwable t) {
-
-                                }
-                            });
+                                return headers;
+                            }
+                        };
+                        //add this request to queue
+                        requestQueue.add(jsonObjectRequest);
+                    }catch (JSONException e){
+                        e.printStackTrace();
+                    }
                 }
             }
 
