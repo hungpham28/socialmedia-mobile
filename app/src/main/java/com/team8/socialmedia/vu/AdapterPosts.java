@@ -187,10 +187,8 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
                 } else {
                     holder.likeBtn.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_like_black, 0, 0, 0);
                     holder.likeBtn.setText("Like");
-
                 }
             }
-
             @Override
             public void onCancelled(@androidx.annotation.NonNull DatabaseError error) {
 
@@ -204,7 +202,7 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
             SpannableString s = new SpannableString("Delete");
             s.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s.length(), 0);
             SpannableString s1 = new SpannableString("Edit");
-            s.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s.length(), 0);
+            s1.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s1.length(), 0);
             popupMenu.getMenu().add(Menu.NONE, 0, 0, s);
             popupMenu.getMenu().add(Menu.NONE, 1, 0, s1);
         }
