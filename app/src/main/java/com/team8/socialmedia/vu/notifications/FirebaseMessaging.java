@@ -41,7 +41,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
         //get current user from shared preferences
         SharedPreferences sp = getSharedPreferences("SP_USER", MODE_PRIVATE);
         String savedCurrentUser = sp.getString("Current_USERID", "None");
-
+        System.out.println(message.getData()+"");
         String notificationType = message.getData().get("notificationType");
         if (notificationType.equals("PostNotification")) {
             //post notification
@@ -86,7 +86,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
         intent.putExtra("postId",pId);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 , intent, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 , intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
 
         //LargeIcon
         Bitmap largeIcon = BitmapFactory.decodeResource(getResources(), R.drawable.logo);

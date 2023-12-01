@@ -267,7 +267,7 @@ public class AddPostActivity extends AppCompatActivity {
                             prepareNotification(
                                     ""+timeStamp,//since we are using timestamp for post id
                                     ""+name+" added new post",
-                                    ""+description+"\n"+description,
+                                    ""+title+"\n"+description,
                                     "PostNotification",
                                     "POST"
                             );
@@ -285,7 +285,7 @@ public class AddPostActivity extends AppCompatActivity {
 
     private void prepareNotification(String pId, String title, String description, String notificationType, String notificationTopic){
         //prepare data for notification
-        String NOTIFICATION_TOPIC = "topics" + notificationTopic;// topic must match with what the receiver subscriber
+        String NOTIFICATION_TOPIC = "/topics/" + notificationTopic;// topic must match with what the receiver subscriber
         String NOTIFICATION_TITLE= title;//e.g. Atif pervaiz added new post
         String NOTIFICATION_MESSAGE= description;//content of post
         String NOTIFICATION_TYPE =  notificationType;//there are two notification types chat & post
@@ -294,11 +294,11 @@ public class AddPostActivity extends AppCompatActivity {
         JSONObject notificationJo = new JSONObject();
         JSONObject notificationBodyJo = new JSONObject();
         try {
-            notificationJo.put("notificationType", NOTIFICATION_TYPE);
-            notificationJo.put("sender", uid);//uid of current user/sender
-            notificationJo.put("pId",pId);//post id
-            notificationJo.put("pTitle", NOTIFICATION_TITLE);
-            notificationJo.put("pDescription", NOTIFICATION_MESSAGE);
+            notificationBodyJo.put("notificationType", NOTIFICATION_TYPE);
+            notificationBodyJo.put("sender", uid);//uid of current user/sender
+            notificationBodyJo.put("pId",pId);//post id
+            notificationBodyJo.put("pTitle", NOTIFICATION_TITLE);
+            notificationBodyJo.put("pDescription", NOTIFICATION_MESSAGE);
 
             //where to send
             notificationJo.put("to", NOTIFICATION_TOPIC);
@@ -323,7 +323,7 @@ public class AddPostActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 //error occured
-                Toast.makeText(AddPostActivity.this, ""+ error.toString(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(AddPostActivity.this, error.toString(), Toast.LENGTH_SHORT).show();
             }
         }){
             public Map<String, String> getHeaders() throws AuthFailureError {
