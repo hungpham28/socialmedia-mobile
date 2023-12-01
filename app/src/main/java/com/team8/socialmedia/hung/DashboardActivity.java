@@ -59,16 +59,6 @@ public class DashboardActivity extends AppCompatActivity {
         ft1.commit();
 
         checkUserStatus();
-
-        FirebaseMessaging.getInstance().getToken()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        // Token retrieved successfully
-                        String token = task.getResult();
-                        updateToken(token);
-                    } else {
-                    }
-                });
     }
 
     @Override
@@ -77,8 +67,7 @@ public class DashboardActivity extends AppCompatActivity {
         super.onResume();
     }
 
-    public void updateToken(String token)
-    {
+    public void updateToken(String token) {
         if (mUID != null) {
             DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Tokens");
             Token mToken = new Token(token);
@@ -135,10 +124,20 @@ public class DashboardActivity extends AppCompatActivity {
             //set email of logged-in user
 
             mUID = user.getUid();
-            SharedPreferences sp = getSharedPreferences("SP_USER",MODE_PRIVATE);
+            SharedPreferences sp = getSharedPreferences("SP_USER", MODE_PRIVATE);
             SharedPreferences.Editor editor = sp.edit();
-            editor.putString("Current_USERID",mUID);
+            editor.putString("Current_USERID", mUID);
             editor.apply();
+
+            FirebaseMessaging.getInstance().getToken()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            // Token retrieved successfully
+                            String token = task.getResult();
+                            updateToken(token);
+                        } else {
+                        }
+                    });
         } else {
             //user not signed in, go to main activity
             startActivity(new Intent(DashboardActivity.this, MainActivity.class));
