@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:id="@+id/messageLayout"
     android:padding="10dp">
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -58,7 +58,7 @@
             android:background="@drawable/bg_sender"/>
 
 
-    </LinearLayout>
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/isSeenTv"
@@ -69,4 +69,4 @@
         android:text="delivered" />
 
 
-</RelativeLayout>
+</LinearLayout>

@@ -21,14 +21,15 @@ import java.util.List;
 public class AdapterChatlist extends RecyclerView.Adapter<AdapterChatlist.MyHolder>{
 
     Context context;
-    List<ModelUser> userList; //get user info
-    private HashMap<String, String> lastMessgaeMap;
     //constructor
     public AdapterChatlist(Context context, List<ModelUser> userList) {
         this.context = context;
         this.userList = userList;
-        lastMessgaeMap = new HashMap<>();
+        lastMessageMap = new HashMap<>();
     }
+
+    List<ModelUser> userList; //get user info
+    private HashMap<String, String> lastMessageMap;
 
     @NonNull
     @Override
@@ -44,22 +45,22 @@ public class AdapterChatlist extends RecyclerView.Adapter<AdapterChatlist.MyHold
         String hisUid = userList.get(position).getUid();
         String userImage = userList.get(position).getImage();
         String userName = userList.get(position).getName();
-        String lastMessage = lastMessgaeMap.get(hisUid);
+        String lastMessage = lastMessageMap.get(hisUid);
 
         //set data
         holder.nameTv.setText(userName);
-
-        if (lastMessage == null) {
-            if (lastMessage.equals("default")) {
-                holder.lastMessageTv.setVisibility(View.GONE);
-            } else {
+// lastMessage.equals("default")
+        if (lastMessage != null || ("default").equals(lastMessage)) {
+            holder.lastMessageTv.setVisibility(View.GONE);
+        }
+        else {
                 holder.lastMessageTv.setVisibility(View.VISIBLE);
                 holder.lastMessageTv.setText(lastMessage);
-            }
         }
         try {
             Picasso.get().load(userImage).placeholder(R.drawable.ic_default_oringe).into(holder.profileIv);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             Picasso.get().load(R.drawable.ic_default_oringe).into(holder.profileIv);
         }
 
@@ -72,7 +73,7 @@ public class AdapterChatlist extends RecyclerView.Adapter<AdapterChatlist.MyHold
             holder.onlineStatusIv.setImageResource(R.drawable.circle_offline);
         }
 
-        //handle click of user in chatlist
+        //handle click of user in Chatlist
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -86,12 +87,13 @@ public class AdapterChatlist extends RecyclerView.Adapter<AdapterChatlist.MyHold
     }
 
 
-    public void setLastMessgaeMap(String userId, String lastMessage){
-        lastMessgaeMap.put(userId, lastMessage);
+    public void setLastMessageMap(String userId, String lastMessage){
+        lastMessageMap.put(userId, lastMessage);
     }
 
     @Override
     public int getItemCount() {
+
         return userList.size();
     }
 

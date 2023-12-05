@@ -24,14 +24,12 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,7 +50,6 @@ import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
-import com.team8.socialmedia.hung.AddPostActivity;
 import com.team8.socialmedia.vu.ModelUser;
 import com.team8.socialmedia.vu.notifications.APIService;
 import com.team8.socialmedia.vu.notifications.Client;
@@ -63,7 +60,6 @@ import com.team8.socialmedia.vu.notifications.Token;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -96,8 +92,10 @@ public class ChatActivity extends AppCompatActivity {
 
 
     String hisUid;
+
     String myUid;
     String hisImage;
+    boolean isBlocked = false;
 
     APIService apiService;
     boolean notify = false;
@@ -116,7 +114,7 @@ public class ChatActivity extends AppCompatActivity {
     Uri image_rui=null;
     String name, email, uid, dp;
     EditText titleEt, descriptionEt;
-    ImageView imageTv;
+    ImageView imageTv, blockIv;
     private android.app.AlertDialog pd;
 
     @Override
@@ -135,6 +133,7 @@ public class ChatActivity extends AppCompatActivity {
         messageEt = findViewById(R.id.chat_messageEt);
         sendBtn = findViewById(R.id.chat_sendBtn);
         attachBtn = findViewById(R.id.attachBtn);
+        blockIv = findViewById(R.id.blockIv);
 
         //init permissions array
         cameraPermissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
@@ -264,10 +263,113 @@ public class ChatActivity extends AppCompatActivity {
 
             }
         });
+        blockIv.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if (isBlocked){
+                    unBlockUser();
+                }
+                else {
+                    blockUser();
+                }
+
+            }
+        });
 
         readMessages();
+        
+        checkIsBlocked();
 
         seenMessage();
+    }
+
+    private void checkIsBlocked() {
+        //check each user, if blocked or not
+        //if uid of the user exists in "BlockedUser" then that user is blocked, otherwise not
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Users");
+        ref.child(firebaseAuth.getUid()).child("BlockedUsers").orderByChild("uid").equalTo(hisUid)
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot ds: snapshot.getChildren()){
+                            if (ds.exists()){
+                                blockIv.setImageResource(R.drawable.ic_blocked_red);
+                                isBlocked = true;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+
+    }
+
+    private void blockUser() {
+        //block the user, by adding uid current user's "BlockedUsers" node
+
+        //put value in hasmap to put in db
+        HashMap<String, String> hashMap = new HashMap<>();
+        hashMap.put("uid", hisUid);
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Users");
+        ref.child(myUid).child("BlockedUsers").child(hisUid).setValue(hashMap)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        //blocked successfully
+                        Toast.makeText(ChatActivity.this, "Blocked Successfully...", Toast.LENGTH_SHORT).show();
+                        blockIv.setImageResource(R.drawable.ic_blocked_red);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        //failed to block
+                        Toast.makeText(ChatActivity.this, "Failed"+e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void unBlockUser() {
+        //unblock the user, by removing uid from current user's "blockedUsers" node
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Users");
+        ref.child(myUid).child("BlockedUsers").orderByChild("uid").equalTo(hisUid)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot ds: snapshot.getChildren()){
+                            if (ds.exists()){
+                                //remove blocked user data from current user's BlockUsers List
+                                ds.getRef().removeValue()
+                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void unused) {
+                                                //unblock successfully
+                                                Toast.makeText(ChatActivity.this, "Unblocked Successfully...", Toast.LENGTH_SHORT).show();
+                                                blockIv.setImageResource(R.drawable.ic_unblocked_green);
+                                            }
+                                        })
+                                        .addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                //failed to unblock
+                                                Toast.makeText(ChatActivity.this, "Failed"+e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
     }
 
     private void uploadData(String title, String description, String uri) {
@@ -323,7 +425,7 @@ public class ChatActivity extends AppCompatActivity {
                                 }).addOnFailureListener(new OnFailureListener() {
                                     @Override
                                     public void onFailure(@NonNull @NotNull Exception e) {
-                                        //failed addming post to database
+                                        //failed adding post to database
                                         pd.dismiss();
                                         Toast.makeText(ChatActivity.this,e.getMessage(), Toast.LENGTH_SHORT).show();
                                     }
@@ -332,8 +434,8 @@ public class ChatActivity extends AppCompatActivity {
                     }
                 }
             }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull @NotNull Exception e) {
+            @Override
+            public void onFailure(@NonNull @NotNull Exception e) {
 
                 }
             });
@@ -524,13 +626,13 @@ public class ChatActivity extends AppCompatActivity {
         hashMap.put("message", message);
         hashMap.put("timestamp", timestamp);
         hashMap.put("isSeen", false);
-        hashMap.put("type", "image");
+        hashMap.put("type", "text");
         databaseReference.child("Chats").push().setValue(hashMap);
         //Reset edittext after sending message
         messageEt.setText("");
 
         String msg = message;
-        final DatabaseReference database = FirebaseDatabase.getInstance().getReference("Users").child(myUid);
+        DatabaseReference database = FirebaseDatabase.getInstance().getReference("Users").child(myUid);
         database.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -547,7 +649,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
         //    create chatlist node/child in firebase database
-        final DatabaseReference chatRef1 = FirebaseDatabase.getInstance().getReference("Chatlist")
+        DatabaseReference chatRef1 = FirebaseDatabase.getInstance().getReference("ChatList")
                 .child(myUid)
                 .child(hisUid);
 
@@ -566,7 +668,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-        final DatabaseReference chatRef2 = FirebaseDatabase.getInstance().getReference("Chatlist")
+        DatabaseReference chatRef2 = FirebaseDatabase.getInstance().getReference("ChatList")
                 .child(hisUid)
                 .child(myUid);
 
@@ -649,7 +751,7 @@ public class ChatActivity extends AppCompatActivity {
                             });
 
                             //    create chatlist node/child in firebase database
-                            final DatabaseReference chatRef1 = FirebaseDatabase.getInstance().getReference("Chatlist")
+                            DatabaseReference chatRef1 = FirebaseDatabase.getInstance().getReference("ChatList")
                                     .child(myUid)
                                     .child(hisUid);
 
@@ -668,7 +770,7 @@ public class ChatActivity extends AppCompatActivity {
                                 }
                             });
 
-                            final DatabaseReference chatRef2 = FirebaseDatabase.getInstance().getReference("Chatlist")
+                            DatabaseReference chatRef2 = FirebaseDatabase.getInstance().getReference("ChatList")
                                     .child(hisUid)
                                     .child(myUid);
 
@@ -809,14 +911,15 @@ public class ChatActivity extends AppCompatActivity {
                 System.out.println("CAMERA_REQUEST_CODE");
                 if (grantResults.length>0){
                     boolean cameraAccepted= grantResults[0] == PackageManager.PERMISSION_GRANTED;
-//                     boolean storageAccepted= grantResults[1] == PackageManager.PERMISSION_GRANTED;
-                    if(cameraAccepted ){
+                     boolean storageAccepted= grantResults[1] == PackageManager.PERMISSION_GRANTED;
+                    if(cameraAccepted && storageAccepted){
                         //both permission are granted
                         pickFromCamera();
                     }
-                }else{
+                }
+                else{
                     //camera or gallery or both permissions are denied
-                    Toast.makeText(this,"Camera & storage both permissions are neccessary",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this,"Camera & storage both permissions are necessary",Toast.LENGTH_SHORT).show();
                 }
                 break;
             }
@@ -829,13 +932,17 @@ public class ChatActivity extends AppCompatActivity {
                         pickFromGallery();
                     }else{
                         //camera or gallery or both permissions were denied
-                        Toast.makeText(this,"Storage permissions | neccessary...", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this,"Storage permissions | necessary...", Toast.LENGTH_SHORT).show();
                     }
                 }
+                else {
+
             }
         }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        break;
     }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+}
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable @org.jetbrains.annotations.Nullable Intent data) {
@@ -849,7 +956,7 @@ public class ChatActivity extends AppCompatActivity {
                 try {
                     sendImageMessage(image_rui);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
 
             }
@@ -858,9 +965,8 @@ public class ChatActivity extends AppCompatActivity {
                 try {
                     sendImageMessage(image_rui);
                 } catch (IOException e) {
-                    e.printStackTrace();;
+                    throw new RuntimeException(e);
                 }
-
             }
         }
 

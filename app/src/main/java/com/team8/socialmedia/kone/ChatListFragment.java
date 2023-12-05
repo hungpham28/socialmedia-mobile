@@ -26,11 +26,11 @@ import com.team8.socialmedia.vu.ModelUser;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ChatListFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+///**
+// * A simple {@link Fragment} subclass.
+// * Use the {@link ChatListFragment#newInstance} factory method to
+// * create an instance of this fragment.
+// */
 public class ChatListFragment extends Fragment {
     FirebaseAuth firebaseAuth;
     RecyclerView recyclerView;
@@ -91,7 +91,7 @@ public class ChatListFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recyclerView);
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
         chatlistList = new ArrayList<>();
-        reference = FirebaseDatabase.getInstance().getReference("Chatlist").child(currentUser.getUid());
+        reference = FirebaseDatabase.getInstance().getReference("ChatList").child(currentUser.getUid());
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -167,7 +167,7 @@ public class ChatListFragment extends Fragment {
                             chat.getReceiver().equals(userId) &&
                             chat.getSender().equals(currentUser.getUid())){
                         //instead of displaying url in message show "sent photo"
-                        if (chat.getType().equals("image")){
+                        if ("image".equals(chat.getType())){
                             theLastMessage = "Sent a photo";
                         }
                         else {
@@ -175,7 +175,7 @@ public class ChatListFragment extends Fragment {
                         }
                     }
                 }
-                adapterChatlist.setLastMessgaeMap(userId, theLastMessage);
+                adapterChatlist.setLastMessageMap(userId, theLastMessage);
                 adapterChatlist.notifyDataSetChanged();
 
             }

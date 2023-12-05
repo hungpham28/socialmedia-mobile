@@ -64,7 +64,7 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MyHolder myHolder, final int position) {
+    public void onBindViewHolder(@NonNull MyHolder myHolder, int position) {
         //get data
         String message = chatList.get(position).getMessage();
         String timeStamp = chatList.get(position).getTimeStamp();
@@ -74,21 +74,21 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
         Calendar cal = Calendar.getInstance(Locale.US);
         cal.setTimeInMillis(Long.parseLong(timeStamp));
         String dateTime = DateFormat.format("dd/MM/yyyy hh:mm aa", cal).toString();
+        System.out.println("text" + message );
+         if ("text".equals(type)){
+             //text message
+             myHolder.messageTv.setVisibility(View.VISIBLE);
+             myHolder.messageIv.setVisibility(View.GONE);
 
-        if(type.equals("text")){
-            //text message
-            myHolder.messageTv.setVisibility(View.VISIBLE);
-            myHolder.messageTv.setVisibility(View.GONE);
+             myHolder.messageTv.setText(message);
+         }
+         else {
+             //text message
+             myHolder.messageTv.setVisibility(View.GONE);
+             myHolder.messageIv.setVisibility(View.VISIBLE);
 
-            myHolder.messageTv.setText(message);
-        }
-        else {
-            //image mesage
-            myHolder.messageTv.setVisibility(View.GONE);
-            myHolder.messageTv.setVisibility(View.VISIBLE);
-
-            Picasso.get().load(message).placeholder(R.drawable.ic_image_black).into(myHolder.messageIv);
-        }
+             Picasso.get().load(message).placeholder(R.drawable.ic_image_black).into(myHolder.messageIv);
+         }
 
         //set data
         myHolder.messageTv.setText(message);
@@ -198,7 +198,7 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
     class MyHolder extends RecyclerView.ViewHolder {
         ImageView profileIv, messageIv;
         TextView messageTv, timeTv, isSeenTv;
-        RelativeLayout messageLayout;
+        LinearLayout messageLayout;
 
         public MyHolder(@NonNull View itemView) {
             super(itemView);
