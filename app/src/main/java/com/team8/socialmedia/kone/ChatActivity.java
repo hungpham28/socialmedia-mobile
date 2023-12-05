@@ -33,9 +33,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -44,19 +46,20 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+
 import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
 import com.team8.socialmedia.vu.ModelUser;
-import com.team8.socialmedia.vu.notifications.APIService;
-import com.team8.socialmedia.vu.notifications.Client;
+
 import com.team8.socialmedia.vu.notifications.Data;
-import com.team8.socialmedia.vu.notifications.Response;
 import com.team8.socialmedia.vu.notifications.Sender;
 import com.team8.socialmedia.vu.notifications.Token;
+
 
 import org.jetbrains.annotations.NotNull;
 
@@ -68,8 +71,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-import retrofit2.Call;
-import retrofit2.Callback;
+
 
 public class ChatActivity extends AppCompatActivity {
     //  View from xml
@@ -97,8 +99,8 @@ public class ChatActivity extends AppCompatActivity {
     String hisImage;
     boolean isBlocked = false;
 
-    APIService apiService;
-    boolean notify = false;
+
+    private boolean notify = false;
 
     //permisstions constants
     private static final int CAMERA_REQUEST_CODE = 100;
@@ -150,7 +152,6 @@ public class ChatActivity extends AppCompatActivity {
         /*          On Clicking user from users list we have passed that user's UID using intent
          *          So get that uid here to get the profile picture, name and start chat with that user   */
 
-        apiService = Client.getRetrofit("https://fcm.googleapis.com/").create(APIService.class);
 
         Intent intent = getIntent();
         hisUid = intent.getStringExtra("hisUid");
@@ -811,24 +812,16 @@ public class ChatActivity extends AppCompatActivity {
                     Token token = ds.getValue(Token.class);
                     Data data = new Data(
                             myUid,
-                            name + ":" + message,
+                            name + ": " + message,
                             "New Message",
                             hisUid,
+                            "ChatNotification",
                             R.drawable.ic_face_light
                     );
                     Sender sender = new Sender(data, token.getToken());
-                    apiService.sendNotification(sender)
-                            .enqueue(new Callback<Response>() {
-                                @Override
-                                public void onResponse(Call<Response> call, retrofit2.Response<Response> response) {
-                                    Toast.makeText(ChatActivity.this, response.message(), Toast.LENGTH_SHORT).show();
-                                }
 
-                                @Override
-                                public void onFailure(Call<Response> call, Throwable t) {
 
-                                }
-                            });
+
                 }
             }
 

@@ -28,8 +28,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
@@ -39,10 +41,12 @@ import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.R;
 import com.team8.socialmedia.hung.AddPostActivity;
 
+import com.team8.socialmedia.hung.PostDetailActivity;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import android.text.format.DateFormat;
 import android.widget.Toast;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -54,13 +58,18 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
 
     Context context;
     List<ModelPost> postList;
-
     String myUid;
+    boolean mProcessLike = false;
+    private DatabaseReference likesRef;
+    private DatabaseReference postsRef;
+
 
     public AdapterPosts(Context context, List<ModelPost> postList) {
         this.context = context;
         this.postList = postList;
         myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        likesRef = FirebaseDatabase.getInstance().getReference().child("Likes");
+        postsRef = FirebaseDatabase.getInstance().getReference().child("Posts");
     }
 
     @androidx.annotation.NonNull
@@ -81,6 +90,9 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
         String pDescription = postList.get(position).getpDescr();
         String pImage = postList.get(position).getpImage();
         String pTimeStamp = postList.get(position).getpTime();
+        String pLikes = postList.get(position).getpLikes();
+        String pComments = postList.get(position).getpComments();
+
 
         Calendar calendar = Calendar.getInstance(Locale.getDefault());
         calendar.setTimeInMillis(Long.parseLong(pTimeStamp));
@@ -91,7 +103,11 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
         holder.pTimeTv.setText(pTime);
         holder.pTitleTv.setText(pTitle);
         holder.pDescriptionTv.setText(pDescription);
+        holder.pLikesTv.setText(pLikes + " Likes");
+        holder.pCommentsTv.setText(pComments + " Comments");
 
+
+        setLikes(holder, pId);
         try {
             Picasso.get().load(uDp).placeholder(R.drawable.ic_face_light).into(holder.uPictureIv);
         } catch (Exception e) {
@@ -118,10 +134,32 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
         holder.likeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(context, "More", Toast.LENGTH_SHORT).show();
+                int pLikes = Integer.parseInt(postList.get(position).getpLikes());
+                mProcessLike = true;
+                String postIde = postList.get(position).getpId();
+                likesRef.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@androidx.annotation.NonNull DataSnapshot snapshot) {
+                        if (mProcessLike) {
+                            if (snapshot.child(postIde).hasChild(myUid)) {
+                                postsRef.child(postIde).child("pLikes").setValue("" + (pLikes - 1));
+                                likesRef.child(postIde).child(myUid).removeValue();
+                                mProcessLike = false;
+                            } else {
+                                postsRef.child(postIde).child("pLikes").setValue("" + (pLikes + 1));
+                                likesRef.child(postIde).child(myUid).setValue("Liked");
+                                mProcessLike = false;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@androidx.annotation.NonNull DatabaseError error) {
+
+                    }
+                });
             }
         });
-
         holder.shareBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -146,7 +184,10 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
         holder.commentBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(context, "Comment", Toast.LENGTH_SHORT).show();
+                //start PostDetailActivity
+                Intent intent = new Intent(context, PostDetailActivity.class);
+                intent.putExtra("postId", pId);//will get detail of post using this id, its id of posts
+                context.startActivity(intent);
             }
         });
 
@@ -160,6 +201,7 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
         });
 
     }
+
 
     private void shareTextOnly(String pTitle, String pDescription) {
         //concatenate title and decription to share
@@ -213,16 +255,44 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
     }
 
 
+
+    private void setLikes(MyHolder holder, String postKey) {
+
+        likesRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@androidx.annotation.NonNull @NotNull DataSnapshot snapshot) {
+                if (snapshot.child(postKey).hasChild(myUid)) {
+                    //user has liked this post
+                    holder.likeBtn.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_liked, 0, 0, 0);
+                    holder.likeBtn.setText("Liked");
+                } else {
+                    //user has not liked this post
+                    holder.likeBtn.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_like_black, 0, 0, 0);
+                    holder.likeBtn.setText("Like");
+                }
+            }
+
+            @Override
+            public void onCancelled(@androidx.annotation.NonNull @NotNull DatabaseError error) {
+
+            }
+        });
+
+    }
+
+
     private void showMoreOptions(ImageButton moreBtn, String uid, String myUid, String pId, String pImage) {
         PopupMenu popupMenu = new PopupMenu(context, moreBtn, Gravity.END);
         if (uid.equals(myUid)) {
             SpannableString s = new SpannableString("Delete");
             s.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s.length(), 0);
             SpannableString s1 = new SpannableString("Edit");
-            s.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s.length(), 0);
+            s1.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s1.length(), 0);
             popupMenu.getMenu().add(Menu.NONE, 0, 0, s);
             popupMenu.getMenu().add(Menu.NONE, 1, 0, s1);
         }
+        popupMenu.getMenu().add(Menu.NONE, 2, 0, "View Detail");
+
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -232,8 +302,12 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
                 }
                 if (id == 1) {
                     Intent intent = new Intent(context, AddPostActivity.class);
-                    intent.putExtra("key","editPost");
-                    intent.putExtra("editPostId",pId);
+                    intent.putExtra("key", "editPost");
+                    intent.putExtra("editPostId", pId);
+                    context.startActivity(intent);
+                } else if (id == 2) {
+                    Intent intent = new Intent(context, PostDetailActivity.class);
+                    intent.putExtra("postId", pId);//will get detail of post using this id, its id of posts
                     context.startActivity(intent);
                 }
 
@@ -314,7 +388,7 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
 
     class MyHolder extends RecyclerView.ViewHolder {
         ImageView uPictureIv, pImageIv;
-        TextView uNameTv, pTimeTv, pTitleTv, pDescriptionTv, pLikesTv;
+        TextView uNameTv, pTimeTv, pTitleTv, pDescriptionTv, pLikesTv, pCommentsTv;
         ImageButton moreBtn;
         Button likeBtn, commentBtn, shareBtn;
         LinearLayout profileLayout;
@@ -333,6 +407,7 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
             commentBtn = itemView.findViewById(R.id.commentBtn);
             shareBtn = itemView.findViewById(R.id.shareBtn);
             profileLayout = itemView.findViewById(R.id.profileLayout);
+            pCommentsTv = itemView.findViewById(R.id.pCommentTv);
         }
     }
 }
