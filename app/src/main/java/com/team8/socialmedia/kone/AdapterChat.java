@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -66,12 +67,28 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
     public void onBindViewHolder(@NonNull MyHolder myHolder, int position) {
         //get data
         String message = chatList.get(position).getMessage();
-        String timeStamp = chatList.get(position).getTimetamp();
+        String timeStamp = chatList.get(position).getTimeStamp();
+        String type = chatList.get(position).getType();
 
         //convert time stamp to dd/mm/yyyy hh:mm am/pm
         Calendar cal = Calendar.getInstance(Locale.US);
         cal.setTimeInMillis(Long.parseLong(timeStamp));
         String dateTime = DateFormat.format("dd/MM/yyyy hh:mm aa", cal).toString();
+        System.out.println("text" + message );
+         if ("text".equals(type)){
+             //text message
+             myHolder.messageTv.setVisibility(View.VISIBLE);
+             myHolder.messageIv.setVisibility(View.GONE);
+
+             myHolder.messageTv.setText(message);
+         }
+         else {
+             //text message
+             myHolder.messageTv.setVisibility(View.GONE);
+             myHolder.messageIv.setVisibility(View.VISIBLE);
+
+             Picasso.get().load(message).placeholder(R.drawable.ic_image_black).into(myHolder.messageIv);
+         }
 
         //set data
         myHolder.messageTv.setText(message);
@@ -102,7 +119,7 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
 
                             int position = myHolder.getAdapterPosition();
                             if (position != RecyclerView.NO_POSITION) {
-                                String msgTimeStamp = chatList.get(position).getTimetamp();
+                                String msgTimeStamp = chatList.get(position).getTimeStamp();
                                 DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference("Chats");
                                 Query query = dbRef.orderByChild("timestamp").equalTo(msgTimeStamp);
                                 query.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -179,7 +196,7 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
 
     //View holder class
     class MyHolder extends RecyclerView.ViewHolder {
-        ImageView profileIv;
+        ImageView profileIv, messageIv;
         TextView messageTv, timeTv, isSeenTv;
         LinearLayout messageLayout;
 
@@ -188,6 +205,7 @@ public class AdapterChat extends RecyclerView.Adapter<AdapterChat.MyHolder> {
 
             //init views
             profileIv = itemView.findViewById(R.id.profileIv);
+            messageIv = itemView.findViewById(R.id.messageIv);
             messageTv = itemView.findViewById(R.id.messageTv);
             timeTv = itemView.findViewById(R.id.timeTv);
             isSeenTv = itemView.findViewById(R.id.isSeenTv);
