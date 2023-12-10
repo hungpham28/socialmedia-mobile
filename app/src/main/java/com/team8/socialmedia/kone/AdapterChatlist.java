@@ -46,11 +46,11 @@ public class AdapterChatlist extends RecyclerView.Adapter<AdapterChatlist.MyHold
         String userImage = userList.get(position).getImage();
         String userName = userList.get(position).getName();
         String lastMessage = lastMessageMap.get(hisUid);
-
+        System.out.println("last-----------------> " + lastMessage);
         //set data
         holder.nameTv.setText(userName);
 // lastMessage.equals("default")
-        if (lastMessage != null || ("default").equals(lastMessage)) {
+        if (lastMessage == null || ("default").equals(lastMessage)) {
             holder.lastMessageTv.setVisibility(View.GONE);
         }
         else {

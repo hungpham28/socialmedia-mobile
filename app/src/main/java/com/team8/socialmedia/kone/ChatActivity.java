@@ -102,7 +102,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private boolean notify = false;
 
-    //permisstions constants
+    //permissions constants
     private static final int CAMERA_REQUEST_CODE = 100;
     private static final int STORAGE_REQUEST_CODE = 200;
     //image pick constants
@@ -238,6 +238,7 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
+                //show image pick dialog
                 showImagePickDialog();
 
             }
@@ -485,7 +486,7 @@ public class ChatActivity extends AppCompatActivity {
         String[] options = {"Camera", "Gallery"};
 
         //dialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(ChatActivity.this);
         builder.setTitle("Choose Image from");
         //set options to dialog
         builder.setItems(options, new DialogInterface.OnClickListener() {
@@ -515,13 +516,6 @@ public class ChatActivity extends AppCompatActivity {
         builder.create().show();
     }
 
-    private void requestCameraPermission() {
-
-    }
-
-    private boolean checkCameraPermission() {
-        return false;
-    }
 
     private void pickFromCamera() {
         //intent to pick image from camera
@@ -556,6 +550,19 @@ public class ChatActivity extends AppCompatActivity {
         //request runtime storage permission
         ActivityCompat.requestPermissions(this, storagePermissions, STORAGE_REQUEST_CODE);
 
+    }
+    private void requestCameraPermission() {
+        //request runtime camera permission
+        ActivityCompat.requestPermissions(this, cameraPermissions, CAMERA_REQUEST_CODE);
+    }
+
+    private boolean checkCameraPermission() {
+        //check if camera permission is enabled or not
+        //return true if enabled
+        //return false if not enabled
+        boolean result = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == (PackageManager.PERMISSION_GRANTED);
+        return result;
     }
 
     private void seenMessage() {
@@ -725,7 +732,7 @@ public class ChatActivity extends AppCompatActivity {
                             //set reuired data
                             HashMap<String, Object> hashMap = new HashMap<>();
                             hashMap.put("sender", myUid);
-                            hashMap.put("receiver", myUid);
+                            hashMap.put("receiver", hisUid);
                             hashMap.put("message", downloadUri);
                             hashMap.put("timestamp", timeStamp);
                             hashMap.put("type", "image");
