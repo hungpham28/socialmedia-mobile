@@ -38,6 +38,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
+import com.team8.socialmedia.PostLikedByActivity;
 import com.team8.socialmedia.R;
 import com.team8.socialmedia.hung.AddPostActivity;
 
@@ -205,6 +206,15 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
             }
         });
 
+        //click like count to start PostLikedByActivity, and pass the post id
+        holder.pLikesTv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent= new Intent(context, PostLikedByActivity.class);
+                intent.putExtra("postId",pId);
+                context.startActivity(intent);
+            }
+        });
     }
 
 

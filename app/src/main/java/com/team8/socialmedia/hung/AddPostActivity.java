@@ -710,7 +710,6 @@ public class AddPostActivity extends AppCompatActivity {
                 break;
             }
             case STORAGE_REQUEST_CODE: {
-                System.out.println("STORAGE_REQUEST_CODE");
                 if (grantResults.length > 0) {
                     boolean storageAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
                     if (storageAccepted) {

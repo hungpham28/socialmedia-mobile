@@ -32,6 +32,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.MainActivity;
+import com.team8.socialmedia.PostLikedByActivity;
 import com.team8.socialmedia.R;
 import com.team8.socialmedia.hung.adapters.AdapterComments;
 import com.team8.socialmedia.hung.models.ModelComment;
@@ -158,6 +159,16 @@ public class PostDetailActivity extends AppCompatActivity {
                 }
             }
         });
+
+        //click like count to start PostLikedByActivity, and pass the post id
+        pLikesTv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent= new Intent(PostDetailActivity.this, PostLikedByActivity.class);
+                intent.putExtra("postId",postId);
+                startActivity(intent);
+            }
+        });
     }
 
     private void shareTextOnly(String pTitle, String pDescription) {
@@ -231,10 +242,10 @@ public class PostDetailActivity extends AppCompatActivity {
                     ModelComment modelComment = ds.getValue(ModelComment.class);
                     commentList.add(modelComment);
 
+
                 }
-                System.out.println(commentList.size());
                 //setup adapter
-                adapterComments = new AdapterComments(getApplicationContext(),commentList);
+                adapterComments = new AdapterComments(getApplicationContext(),commentList,myUid,postId);
                 //set adapter
                 recyclerView.setAdapter(adapterComments);
             }
@@ -528,7 +539,6 @@ public class PostDetailActivity extends AppCompatActivity {
                     pLikesTv.setText(pLikes + " Likes");
                     pCommentTv.setText(commentCount + " Comments");
                     pTimeTiv.setText(pTime);
-                    pCommentTv.setText(commentCount);
                     uNameTv.setText(hisName);
                     //set image of user who posted
                     if (pImage.equals("noImage")) {

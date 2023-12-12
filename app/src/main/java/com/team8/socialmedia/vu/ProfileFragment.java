@@ -681,6 +681,9 @@ public class ProfileFragment extends Fragment {
 
         inflater.inflate(R.menu.menu_main, menu);
 
+        //hide some options
+        menu.findItem(R.id.action_create_group).setVisible(false);
+
         MenuItem item = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
