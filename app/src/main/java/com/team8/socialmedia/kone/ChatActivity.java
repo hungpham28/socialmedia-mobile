@@ -47,6 +47,7 @@ import com.team8.socialmedia.vu.ModelUser;
 import com.team8.socialmedia.vu.notifications.Data;
 import com.team8.socialmedia.vu.notifications.Sender;
 import com.team8.socialmedia.vu.notifications.Token;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -95,7 +96,7 @@ public class ChatActivity extends AppCompatActivity {
         messageEt = findViewById(R.id.chat_messageEt);
         sendBtn = findViewById(R.id.chat_sendBtn);
 
-        requestQueue= Volley.newRequestQueue(getApplicationContext());
+        requestQueue = Volley.newRequestQueue(getApplicationContext());
         //Layout (LinearLayout) for RecyclerView
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setStackFromEnd(true);
@@ -302,6 +303,38 @@ public class ChatActivity extends AppCompatActivity {
 
             }
         });
+
+        DatabaseReference chatRef1 = FirebaseDatabase.getInstance().getReference("ChatList")
+                .child(myUid)
+                .child(hisUid);
+        chatRef1.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    chatRef1.child("id").setValue(hisUid);
+                }
+
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+        DatabaseReference chatRef2 = FirebaseDatabase.getInstance().getReference("ChatList")
+                .child(hisUid)
+                .child(myUid);
+        chatRef2.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    chatRef2.child("id").setValue(myUid);
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
     }
 
     private void senNotification(String hisUid, String name, String message) {
@@ -323,33 +356,33 @@ public class ChatActivity extends AppCompatActivity {
                     Sender sender = new Sender(data, token.getToken());
                     //fcm json object
                     try {
-                        JSONObject senderJsonObj=new JSONObject(new Gson().toJson(sender));
-                        JsonObjectRequest jsonObjectRequest=new JsonObjectRequest("https://fcm.googleapis.com/fcm/send", senderJsonObj,
+                        JSONObject senderJsonObj = new JSONObject(new Gson().toJson(sender));
+                        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest("https://fcm.googleapis.com/fcm/send", senderJsonObj,
                                 new Response.Listener<JSONObject>() {
                                     @Override
                                     public void onResponse(JSONObject response) {
                                         //response of the request
-                                        Log.d("JSON_RESPONSE","onResponse: "+response.toString());
+                                        Log.d("JSON_RESPONSE", "onResponse: " + response.toString());
                                     }
                                 }, new Response.ErrorListener() {
                             @Override
                             public void onErrorResponse(VolleyError error) {
-                                Log.d("JSON_REPONSE", "onResponse: "+error.toString());
+                                Log.d("JSON_REPONSE", "onResponse: " + error.toString());
                             }
-                        }){
+                        }) {
                             @Override
                             public Map<String, String> getHeaders() throws AuthFailureError {
                                 //put params
-                                Map<String, String> headers=new HashMap<>();
-                                headers.put("Content-Type","application/json");
-                                headers.put("Authorization","key=AAAAloT5Lsw:APA91bGTjwvNeps0eEuuC-TLC1LLyTt3vqmovmpf8LCuOKxGzZ4wy9VmNCHnlhmQ5XN4FySrjVsfBU398kvNL_F4umPVCxqy3aamtKBM-Vuex4Bn5TMrFUSRcQhANP_9fKIXEdzpMD9i");
+                                Map<String, String> headers = new HashMap<>();
+                                headers.put("Content-Type", "application/json");
+                                headers.put("Authorization", "key=AAAAloT5Lsw:APA91bGTjwvNeps0eEuuC-TLC1LLyTt3vqmovmpf8LCuOKxGzZ4wy9VmNCHnlhmQ5XN4FySrjVsfBU398kvNL_F4umPVCxqy3aamtKBM-Vuex4Bn5TMrFUSRcQhANP_9fKIXEdzpMD9i");
 
                                 return headers;
                             }
                         };
                         //add this request to queue
                         requestQueue.add(jsonObjectRequest);
-                    }catch (JSONException e){
+                    } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }

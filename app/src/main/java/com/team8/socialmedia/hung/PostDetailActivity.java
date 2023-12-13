@@ -2,7 +2,10 @@ package com.team8.socialmedia.hung;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
@@ -16,6 +19,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -32,6 +37,8 @@ import com.team8.socialmedia.hung.adapters.AdapterComments;
 import com.team8.socialmedia.hung.models.ModelComment;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.*;
 
 public class PostDetailActivity extends AppCompatActivity {
@@ -129,8 +136,75 @@ public class PostDetailActivity extends AppCompatActivity {
 
             }
         });
+
+        shareBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String pTitle = pTitleTv.getText().toString().trim();
+                String pDescription = pDescriptionTv.getText().toString().trim();
+
+                BitmapDrawable bitmapDrawable = (BitmapDrawable) pImageIv.getDrawable();
+                if (bitmapDrawable == null){
+                    //post without image
+                    shareTextOnly(pTitle, pDescription);
+                }
+                else {
+                    //post with to image
+
+                    //convert image to bitmap
+                    Bitmap bitmap = bitmapDrawable.getBitmap();
+                    shareImageAndText(pTitle, pDescription, bitmap);
+                }
+            }
+        });
     }
 
+    private void shareImageAndText(String pTitle, String pDescription, Bitmap bitmap) {
+        //concatenate title and description to share
+        String shareBody = pTitle + "\n" + pDescription;
+
+        //first we will save this image in cache, get hte saved image uri
+        Uri uri = saveImageToShare(bitmap);
+
+        //share intent
+        Intent sIntent = new Intent(Intent.ACTION_SEND);
+        sIntent.putExtra(Intent.EXTRA_STREAM, uri);
+        sIntent.putExtra(Intent.EXTRA_TEXT, shareBody);
+        sIntent.putExtra(Intent.EXTRA_SUBJECT,"Subject Here");
+        sIntent.setType("image/png");
+        startActivity(Intent.createChooser(sIntent,"Share Via"));
+    }
+    private Uri saveImageToShare(Bitmap bitmap) {
+        File imageFolder = new File(getCacheDir(),"images");
+        Uri uir = null;
+        try {
+            imageFolder.mkdir();//create if not exists
+            File file = new File(imageFolder, "shared_image.png");
+
+            FileOutputStream stream = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.PNG,90,stream);
+            stream.flush();
+            stream.close();
+            uir = FileProvider.getUriForFile(this,"com.example.unity.fileprovider",file);
+
+        }
+        catch (Exception e){
+            Toast.makeText(this, ""+ e.getMessage(), Toast.LENGTH_SHORT).show();
+
+        }
+        return uir;
+    }
+    private void shareTextOnly(String pTitle, String pDescription) {
+        //concatenate title and decription to share
+        String shareBody = pTitle+"\n"+pDescription;
+
+        //share intent
+        Intent sIntent = new Intent(Intent.ACTION_SEND);
+        sIntent.setType("text/plain");
+        sIntent.putExtra(Intent.EXTRA_SUBJECT,"Subject Here");// in case you share via an email app
+        sIntent.putExtra(Intent.EXTRA_TEXT, shareBody); //text to share
+        startActivity(Intent.createChooser(sIntent,"Share Via")); //message to show in share dialog
+    }
     private void loadComments() {
         //layout (linear) for recyclerview
         LinearLayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
@@ -166,7 +240,6 @@ public class PostDetailActivity extends AppCompatActivity {
         });
 
     }
-
     private void showMoreOptions() {
         PopupMenu popupMenu = new PopupMenu(this, moreBtn, Gravity.END);
         if (hisUid.equals(myUid)) {
@@ -197,7 +270,6 @@ public class PostDetailActivity extends AppCompatActivity {
         });
         popupMenu.show();
     }
-
     private void beginDelete() {
         if (pImage.equals("noImage")) {
             deleteWithoutImage();
@@ -205,7 +277,6 @@ public class PostDetailActivity extends AppCompatActivity {
             deleteWithImage();
         }
     }
-
     private void deleteWithImage() {
         final ProgressDialog pd = new ProgressDialog(PostDetailActivity.this);
         pd.setMessage("Deleting...");
@@ -240,7 +311,6 @@ public class PostDetailActivity extends AppCompatActivity {
         });
 
     }
-
     private void deleteWithoutImage() {
         final ProgressDialog pd = new ProgressDialog(PostDetailActivity.this);
         pd.setMessage("Deleting...");
@@ -262,7 +332,6 @@ public class PostDetailActivity extends AppCompatActivity {
             }
         });
     }
-
     private void setLikes() {
         final DatabaseReference likesRef= FirebaseDatabase.getInstance().getReference().child("Likes");
 
@@ -286,7 +355,6 @@ public class PostDetailActivity extends AppCompatActivity {
             }
         });
     }
-
     private void likePost() {
 
         //get total number of likes for the post, whose like button clicked
@@ -320,7 +388,6 @@ public class PostDetailActivity extends AppCompatActivity {
         });
 
     }
-
     private void postComment() {
         pd = new ProgressDialog(this);
         pd.setMessage("Adding comment ...");
@@ -368,7 +435,6 @@ public class PostDetailActivity extends AppCompatActivity {
 
 
     }
-
     private void updateCommentCount() {
         //whenerver user adds comment increase the comment count as we did for like count
         mProcessComment = true;
@@ -390,7 +456,6 @@ public class PostDetailActivity extends AppCompatActivity {
             }
         });
     }
-
     private void loadUserInfo() {
         Query myRef = FirebaseDatabase.getInstance().getReference("Users");
         myRef.orderByChild("uid").equalTo(myUid).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -416,7 +481,6 @@ public class PostDetailActivity extends AppCompatActivity {
             }
         });
     }
-
     private void loadPostInfo() {
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
         Query query = ref.orderByChild("pId").equalTo(postId);
@@ -476,7 +540,6 @@ public class PostDetailActivity extends AppCompatActivity {
             }
         });
     }
-
     private void checkUserStatus() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
@@ -495,7 +558,6 @@ public class PostDetailActivity extends AppCompatActivity {
         onBackPressed();
         return super.onSupportNavigateUp();
     }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -504,7 +566,6 @@ public class PostDetailActivity extends AppCompatActivity {
         menu.findItem(R.id.action_search).setVisible(false);
         return super.onCreateOptionsMenu(menu);
     }
-
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         //get item id
