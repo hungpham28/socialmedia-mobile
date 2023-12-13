@@ -52,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -154,6 +155,8 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
                                 postsRef.child(postIde).child("pLikes").setValue("" + (pLikes + 1));
                                 likesRef.child(postIde).child(myUid).setValue("Liked");
                                 mProcessLike = false;
+
+                                addToHisNotifications(""+uid,""+pId,"Liked your post");
                             }
                         }
                     }
@@ -217,6 +220,31 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
         });
     }
 
+    private void addToHisNotifications(String hisUid, String pId,String notification){
+        String timestamp = ""+System.currentTimeMillis();
+
+        HashMap<Object, String> hashMap= new HashMap<>();
+        hashMap.put("pId",pId);
+        hashMap.put("timestamp",timestamp);
+        hashMap.put("pUid", hisUid);
+        hashMap.put("notification",notification);
+        hashMap.put("sUid",myUid);
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Users");
+        ref.child(hisUid).child("Notifications").child(timestamp).setValue(hashMap)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@androidx.annotation.NonNull Exception e) {
+
+                    }
+                });
+
+    }
 
     private void shareTextOnly(String pTitle, String pDescription) {
         //concatenate title and decription to share
