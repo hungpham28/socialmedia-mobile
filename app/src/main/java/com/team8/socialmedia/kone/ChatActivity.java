@@ -24,6 +24,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,6 +35,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -51,6 +58,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
@@ -62,6 +70,8 @@ import com.team8.socialmedia.vu.notifications.Token;
 
 
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -70,7 +80,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-
+import java.util.Map;
 
 
 public class ChatActivity extends AppCompatActivity {
@@ -97,12 +107,13 @@ public class ChatActivity extends AppCompatActivity {
 
     String myUid;
     String hisImage;
-    boolean isBlocked = false;
+    private RequestQueue requestQueue;
+     private boolean isBlocked = false;
 
 
     private boolean notify = false;
 
-    //permisstions constants
+    //permissions constants
     private static final int CAMERA_REQUEST_CODE = 100;
     private static final int STORAGE_REQUEST_CODE = 200;
     //image pick constants
@@ -141,6 +152,7 @@ public class ChatActivity extends AppCompatActivity {
         cameraPermissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
         storagePermissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
+        requestQueue = Volley.newRequestQueue(getApplicationContext());
         //Layout (LinearLayout) for RecyclerView
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setStackFromEnd(true);
@@ -238,6 +250,7 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
+                //show image pick dialog
                 showImagePickDialog();
 
             }
@@ -278,7 +291,7 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         readMessages();
-        
+
         checkIsBlocked();
 
         seenMessage();
@@ -435,8 +448,8 @@ public class ChatActivity extends AppCompatActivity {
                     }
                 }
             }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull @NotNull Exception e) {
+                @Override
+                public void onFailure(@NonNull @NotNull Exception e) {
 
                 }
             });
@@ -485,7 +498,7 @@ public class ChatActivity extends AppCompatActivity {
         String[] options = {"Camera", "Gallery"};
 
         //dialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(ChatActivity.this);
         builder.setTitle("Choose Image from");
         //set options to dialog
         builder.setItems(options, new DialogInterface.OnClickListener() {
@@ -515,13 +528,6 @@ public class ChatActivity extends AppCompatActivity {
         builder.create().show();
     }
 
-    private void requestCameraPermission() {
-
-    }
-
-    private boolean checkCameraPermission() {
-        return false;
-    }
 
     private void pickFromCamera() {
         //intent to pick image from camera
@@ -556,6 +562,19 @@ public class ChatActivity extends AppCompatActivity {
         //request runtime storage permission
         ActivityCompat.requestPermissions(this, storagePermissions, STORAGE_REQUEST_CODE);
 
+    }
+    private void requestCameraPermission() {
+        //request runtime camera permission
+        ActivityCompat.requestPermissions(this, cameraPermissions, CAMERA_REQUEST_CODE);
+    }
+
+    private boolean checkCameraPermission() {
+        //check if camera permission is enabled or not
+        //return true if enabled
+        //return false if not enabled
+        boolean result = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == (PackageManager.PERMISSION_GRANTED);
+        return result;
     }
 
     private void seenMessage() {
@@ -725,7 +744,7 @@ public class ChatActivity extends AppCompatActivity {
                             //set reuired data
                             HashMap<String, Object> hashMap = new HashMap<>();
                             hashMap.put("sender", myUid);
-                            hashMap.put("receiver", myUid);
+                            hashMap.put("receiver", hisUid);
                             hashMap.put("message", downloadUri);
                             hashMap.put("timestamp", timeStamp);
                             hashMap.put("type", "image");
@@ -819,9 +838,37 @@ public class ChatActivity extends AppCompatActivity {
                             R.drawable.ic_face_light
                     );
                     Sender sender = new Sender(data, token.getToken());
+                    //fcm json object
+                    try {
+                        JSONObject senderJsonObj = new JSONObject(new Gson().toJson(sender));
+                        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest("https://fcm.googleapis.com/fcm/send", senderJsonObj,
+                                new Response.Listener<JSONObject>() {
+                                    @Override
+                                    public void onResponse(JSONObject response) {
+                                        //response of the request
+                                        Log.d("JSON_RESPONSE", "onResponse: " + response.toString());
+                                    }
+                                }, new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                Log.d("JSON_REPONSE", "onResponse: " + error.toString());
+                            }
+                        }) {
+                            @Override
+                            public Map<String, String> getHeaders() throws AuthFailureError {
+                                //put params
+                                Map<String, String> headers = new HashMap<>();
+                                headers.put("Content-Type", "application/json");
+                                headers.put("Authorization", "key=AAAAloT5Lsw:APA91bGTjwvNeps0eEuuC-TLC1LLyTt3vqmovmpf8LCuOKxGzZ4wy9VmNCHnlhmQ5XN4FySrjVsfBU398kvNL_F4umPVCxqy3aamtKBM-Vuex4Bn5TMrFUSRcQhANP_9fKIXEdzpMD9i");
 
-
-
+                                return headers;
+                            }
+                        };
+                        //add this request to queue
+                        requestQueue.add(jsonObjectRequest);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
@@ -831,6 +878,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
     }
+
 
     private void checkUserStatus() {
         //get current user
@@ -904,7 +952,7 @@ public class ChatActivity extends AppCompatActivity {
                 System.out.println("CAMERA_REQUEST_CODE");
                 if (grantResults.length>0){
                     boolean cameraAccepted= grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                     boolean storageAccepted= grantResults[1] == PackageManager.PERMISSION_GRANTED;
+                    boolean storageAccepted= grantResults[1] == PackageManager.PERMISSION_GRANTED;
                     if(cameraAccepted && storageAccepted){
                         //both permission are granted
                         pickFromCamera();
@@ -930,12 +978,12 @@ public class ChatActivity extends AppCompatActivity {
                 }
                 else {
 
+                }
             }
+            break;
         }
-        break;
-    }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-}
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable @org.jetbrains.annotations.Nullable Intent data) {
@@ -973,7 +1021,6 @@ public class ChatActivity extends AppCompatActivity {
 //      Hide searchview, as we dont need it here
         menu.findItem(R.id.action_search).setVisible(false);
         menu.findItem(R.id.action_add_post).setVisible(false);
-        menu.findItem(R.id.action_create_group).setVisible(false);
 
         return super.onCreateOptionsMenu(menu);
     }

@@ -50,7 +50,7 @@ public class AdapterChatlist extends RecyclerView.Adapter<AdapterChatlist.MyHold
         //set data
         holder.nameTv.setText(userName);
 // lastMessage.equals("default")
-        if (lastMessage != null || ("default").equals(lastMessage)) {
+        if (lastMessage == null || ("default").equals(lastMessage)) {
             holder.lastMessageTv.setVisibility(View.GONE);
         }
         else {
