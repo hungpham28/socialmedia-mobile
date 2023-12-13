@@ -104,6 +104,7 @@ public class AdapterUsers extends RecyclerView.Adapter<AdapterUsers.MyHolder> {
         holder.blockIv.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
+
                 if (userList.get(holder.getAdapterPosition()).isBlocked()){
                     unBlockUser(hisUID);
                 }
@@ -201,7 +202,7 @@ public class AdapterUsers extends RecyclerView.Adapter<AdapterUsers.MyHolder> {
         //unblock the user, by removing uid from current user's "blockedUsers" node
 
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Users");
-        ref.child(myUid).child("BlockedUsers").orderByChild(hisUID).equalTo(hisUID)
+        ref.child(myUid).child("BlockedUsers").orderByChild("uid").equalTo(hisUID)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
