@@ -257,7 +257,7 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
             bitmap.compress(Bitmap.CompressFormat.PNG,90,stream);
             stream.flush();
             stream.close();
-            uir = FileProvider.getUriForFile(context,"com.blogspot.atifsoftwares.firebaseapp.fileprovider",file);
+            uir = FileProvider.getUriForFile(context,"com.example.unity.fileprovider",file);
 
         }
         catch (Exception e){
