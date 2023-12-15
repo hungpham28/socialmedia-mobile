@@ -6,6 +6,9 @@ import static com.team8.socialmedia.R.id.navigation;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -127,8 +130,12 @@ public class DashboardActivity extends AppCompatActivity {
         //popup menu to show more options
         PopupMenu popupMenu = new PopupMenu(this, navigationView, Gravity.END);
         //items to show in menu
-        popupMenu.getMenu().add(Menu.NONE, 0,0,"Notifications");
-        popupMenu.getMenu().add(Menu.NONE, 1,0,"Group Chats");
+        SpannableString s = new SpannableString("Notifications");
+        s.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s.length(), 0);
+        SpannableString s1 = new SpannableString("Group Chats");
+        s1.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s1.length(), 0);
+        popupMenu.getMenu().add(Menu.NONE, 0, 0, s);
+        popupMenu.getMenu().add(Menu.NONE, 1, 0, s1);
 
         //menu clicks
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
@@ -137,7 +144,7 @@ public class DashboardActivity extends AppCompatActivity {
                 int id= item.getItemId();
                 if(id==0){
                     //notificaitons clicked
-                    actionBar.setTitle("Chats");
+                    actionBar.setTitle("Notification");
                     NotificationsFragment fragment5 = new NotificationsFragment();
                     FragmentTransaction ft5 = getSupportFragmentManager().beginTransaction();
                     ft5.replace(R.id.container, fragment5, "");
@@ -145,15 +152,16 @@ public class DashboardActivity extends AppCompatActivity {
 
                 }else if(id==1){
                     //group chats clicked
-                    actionBar.setTitle("Chats");
-                    NotificationsFragment fragment5 = new NotificationsFragment();
-                    FragmentTransaction ft5 = getSupportFragmentManager().beginTransaction();
-                    ft5.replace(R.id.container, fragment5, "");
-                    ft5.commit();
+                    actionBar.setTitle("Group Chats");
+                    GroupChatsFragment fragment6 = new GroupChatsFragment();
+                    FragmentTransaction ft6 = getSupportFragmentManager().beginTransaction();
+                    ft6.replace(R.id.container, fragment6, "");
+                    ft6.commit();
                 }
                 return false;
             }
         });
+        popupMenu.show();
     }
 
     private void checkUserStatus() {
