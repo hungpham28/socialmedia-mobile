@@ -1,6 +1,7 @@
 package com.team8.socialmedia.vu;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,6 +45,14 @@ public class AdapterGroupChatList extends RecyclerView.Adapter<AdapterGroupChatL
         } catch (Exception e) {
             holder.groupIconIv.setImageResource(R.drawable.ic_group_primary);
         }
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(context, GroupChatActivity.class);
+                intent.putExtra("groupId", groupId);
+                context.startActivity(intent);
+            }
+        });
     }
 
     @Override
