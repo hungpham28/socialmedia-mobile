@@ -148,7 +148,7 @@ public class AddPostActivity extends AppCompatActivity {
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     name = "" + ds.child("name").getValue();
                     email = "" + ds.child("email").getValue();
-                    dp = "" + ds.child("dp").getValue();
+                    dp = "" + ds.child("image").getValue();
 
                 }
             }

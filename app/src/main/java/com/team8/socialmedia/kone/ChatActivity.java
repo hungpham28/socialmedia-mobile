@@ -113,7 +113,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private boolean notify = false;
 
-    //permissions constants
+    //permisstions constants
     private static final int CAMERA_REQUEST_CODE = 100;
     private static final int STORAGE_REQUEST_CODE = 200;
     //image pick constants
@@ -291,7 +291,7 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         readMessages();
-
+        
         checkIsBlocked();
 
         seenMessage();
@@ -448,8 +448,8 @@ public class ChatActivity extends AppCompatActivity {
                     }
                 }
             }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull @NotNull Exception e) {
+            @Override
+            public void onFailure(@NonNull @NotNull Exception e) {
 
                 }
             });
@@ -879,7 +879,6 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-
     private void checkUserStatus() {
         //get current user
         FirebaseUser user = firebaseAuth.getCurrentUser();
@@ -978,12 +977,12 @@ public class ChatActivity extends AppCompatActivity {
                 }
                 else {
 
-                }
             }
-            break;
         }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        break;
     }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+}
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable @org.jetbrains.annotations.Nullable Intent data) {
@@ -1021,6 +1020,7 @@ public class ChatActivity extends AppCompatActivity {
 //      Hide searchview, as we dont need it here
         menu.findItem(R.id.action_search).setVisible(false);
         menu.findItem(R.id.action_add_post).setVisible(false);
+        menu.findItem(R.id.action_create_group).setVisible(false);
 
         return super.onCreateOptionsMenu(menu);
     }
