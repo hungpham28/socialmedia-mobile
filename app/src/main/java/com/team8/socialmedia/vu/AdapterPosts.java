@@ -332,7 +332,7 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
             SpannableString s1 = new SpannableString("Edit");
             s1.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s1.length(), 0);
             SpannableString s2 = new SpannableString("View Detail");
-            s1.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s2.length(), 0);
+            s2.setSpan(new ForegroundColorSpan(Color.BLACK), 0, s2.length(), 0);
             popupMenu.getMenu().add(Menu.NONE, 0, 0, s);
             popupMenu.getMenu().add(Menu.NONE, 1, 0, s1);
             popupMenu.getMenu().add(Menu.NONE, 2, 0, s2);
