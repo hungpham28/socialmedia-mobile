@@ -380,9 +380,8 @@ public class GroupChatActivity extends AppCompatActivity {
             Intent intent = new Intent(this, GroupParticipantAddActivity.class);
             intent.putExtra("groupId", groupId);
             startActivity(intent);
-            return true;
         }
-        else if (id == R.id.action_groupinfo) {
+        else if (id == R.id.action_groupInfo) {
             Intent intent = new Intent(this, GroupInfoActivity.class);
             intent.putExtra("groupId", groupId);
             startActivity(intent);

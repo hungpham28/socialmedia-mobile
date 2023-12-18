@@ -125,7 +125,7 @@ public class GroupChatsFragment extends Fragment {
         //hide addpost icon from this fragment
         menu.findItem(R.id.action_add_post).setVisible(false);
         menu.findItem(R.id.action_settings).setVisible(false);
-        menu.findItem(R.id.action_groupinfo).setVisible(false);
+        menu.findItem(R.id.action_groupInfo).setVisible(false);
 
         MenuItem item = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
