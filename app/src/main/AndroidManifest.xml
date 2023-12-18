@@ -37,8 +37,10 @@
             android:name=".GroupInfoActivity"
             android:exported="false" />
         <activity
+            android:name=".vu.GroupParticipantAddActivity"
+            android:exported="false" />
+        <activity
             android:name=".vu.GroupChatActivity"
-            android:exported="false"
             android:theme="@style/AppThemeNo" />
         <activity
             android:name=".hung.GroupCreateActivity"

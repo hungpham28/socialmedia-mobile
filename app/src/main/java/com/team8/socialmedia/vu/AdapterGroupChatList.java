@@ -51,7 +51,6 @@ public class AdapterGroupChatList extends RecyclerView.Adapter<AdapterGroupChatL
         holder.timeTv.setText("");
         holder.messageTv.setText("");
 
-
         loadLastMessage(model, holder);
 
         holder.groupTitleTv.setText(groupTitle);
@@ -70,19 +69,19 @@ public class AdapterGroupChatList extends RecyclerView.Adapter<AdapterGroupChatL
         });
     }
 
-    private void loadLastMessage(ModelGroupChatList model, HolderGroupChatList holder){
+    private void loadLastMessage(ModelGroupChatList model, HolderGroupChatList holder) {
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Groups");
-        ref.child(model.getGroupId()).child("Messages").limitToLast(1)
+        ref.child(model.getGroupId()).child("Message").limitToLast(1)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        for (DataSnapshot ds: snapshot.getChildren()){
+                        for (DataSnapshot ds : snapshot.getChildren()) {
                             String message = "" + ds.child("message").getValue();
                             String timestamp = "" + ds.child("timestamp").getValue();
                             String sender = "" + ds.child("sender").getValue();
                             String messageType = "" + ds.child("type").getValue();
 
-                            Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+                            Calendar cal = Calendar.getInstance(Locale.US);
                             cal.setTimeInMillis(Long.parseLong(timestamp));
                             String dateTime = DateFormat.format("dd/MM/yyyy hh:mm aa", cal).toString();
 
@@ -93,13 +92,12 @@ public class AdapterGroupChatList extends RecyclerView.Adapter<AdapterGroupChatL
                             }
                             holder.timeTv.setText(dateTime);
 
-
                             DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Users");
                             ref.orderByChild("uid").equalTo(sender)
                                     .addValueEventListener(new ValueEventListener() {
                                         @Override
                                         public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                            for (DataSnapshot ds: snapshot.getChildren()){
+                                            for (DataSnapshot ds : snapshot.getChildren()) {
                                                 String name = "" + ds.child("name").getValue();
                                                 holder.nameTv.setText(name);
                                             }

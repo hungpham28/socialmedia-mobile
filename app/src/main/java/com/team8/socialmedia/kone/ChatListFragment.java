@@ -21,6 +21,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
+import com.team8.socialmedia.hung.GroupCreateActivity;
 import com.team8.socialmedia.hung.SettingsActivity;
 import com.team8.socialmedia.vu.ModelUser;
 
@@ -165,8 +166,8 @@ public class ChatListFragment extends Fragment {
                     }
                     if (chat.getReceiver().equals(currentUser.getUid()) &&
                             chat.getSender().equals(userId) ||
-                            chat.getReceiver().equals(userId) &&
-                                    chat.getSender().equals(currentUser.getUid())){
+                        chat.getReceiver().equals(userId) &&
+                        chat.getSender().equals(currentUser.getUid())){
                         //instead of displaying url in message show "sent photo"
                         if ("image".equals(chat.getType())){
                             theLastMessage = "Sent a photo";
@@ -210,6 +211,7 @@ public class ChatListFragment extends Fragment {
 
         //hide addpost icon from this fragment
         menu.findItem(R.id.action_add_post).setVisible(false);
+        menu.findItem(R.id.action_add_participant).setVisible(false);
         menu.findItem(R.id.action_groupinfo).setVisible(false);
 
         super.onCreateOptionsMenu(menu, inflater);
@@ -222,9 +224,12 @@ public class ChatListFragment extends Fragment {
         if (id == R.id.action_logout) {
             firebaseAuth.signOut();
             checkUserStatus();
-        }else if(id==R.id.action_settings){
+        }else if(id==R.id.action_settings) {
             //go to settings activity
             startActivity(new Intent(getActivity(), SettingsActivity.class));
+        }else if(id==R.id.action_create_group){
+            //got to settings activity
+            startActivity(new Intent(getActivity(), GroupCreateActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }
