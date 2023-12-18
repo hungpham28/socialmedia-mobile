@@ -22,21 +22,24 @@
         tools:ignore="ScopedStorage" />
 
     <application
+        android:name=".kone.MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:name=".kone.MyApplication"
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SocialMediaApp"
         tools:targetApi="31">
         <activity
+            android:name=".GroupInfoActivity"
+            android:exported="false" />
+        <activity
             android:name=".vu.GroupChatActivity"
             android:exported="false"
-            android:theme="@style/AppThemeNo"/>
+            android:theme="@style/AppThemeNo" />
         <activity
             android:name=".hung.GroupCreateActivity"
             android:exported="false" />
@@ -52,25 +55,30 @@
         <activity
             android:name=".vu.ThereProfileActivity"
             android:exported="false" />
-        <!--Intent filters inform system what intents an application compoment is willing to accept.
-        to receive text/image type of intents we will add intent filter to activity, that will handle that data-->
+        <!--
+Intent filters inform system what intents an application compoment is willing to accept.
+        to receive text/image type of intents we will add intent filter to activity, that will handle that data
+        -->
         <activity
             android:name=".hung.AddPostActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.SEND"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="image/*"/>
-            </intent-filter>
+                <action android:name="android.intent.action.SEND" />
 
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="image/*" />
+            </intent-filter>
             <intent-filter>
-                <!--For Text-->
-                <action android:name="android.intent.action.SEND"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="text/*"/>
+
+                <!-- For Text -->
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/*" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".hung.LoginActivity"
             android:exported="false" />
@@ -91,16 +99,14 @@
             android:exported="false" />
         <activity
             android:name=".MainActivity"
-            android:exported="false" />
-
-<!--        <service-->
-<!--            android:name=".vu.notifications.FirebaseService"-->
-<!--            android:enabled="true"-->
-<!--            android:exported="true">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="com.google.firebase.INSTANCE_ID_SERVICE" />-->
-<!--            </intent-filter>-->
-<!--        </service>-->
+            android:exported="false" /> <!-- <service -->
+        <!-- android:name=".vu.notifications.FirebaseService" -->
+        <!-- android:enabled="true" -->
+        <!-- android:exported="true"> -->
+        <!-- <intent-filter> -->
+        <!-- <action android:name="com.google.firebase.INSTANCE_ID_SERVICE" /> -->
+        <!-- </intent-filter> -->
+        <!-- </service> -->
         <service
             android:name=".vu.notifications.FirebaseMessaging"
             android:enabled="true"

@@ -210,7 +210,7 @@ public class ChatListFragment extends Fragment {
 
         //hide addpost icon from this fragment
         menu.findItem(R.id.action_add_post).setVisible(false);
-
+        menu.findItem(R.id.action_groupinfo).setVisible(false);
 
         super.onCreateOptionsMenu(menu, inflater);
     }

@@ -134,6 +134,8 @@ public class HomeFragment extends Fragment {
         //inflating menu
         inflater.inflate(R.menu.menu_main, menu);
 
+        menu.findItem(R.id.action_groupinfo).setVisible(false);
+
         MenuItem item = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
 
