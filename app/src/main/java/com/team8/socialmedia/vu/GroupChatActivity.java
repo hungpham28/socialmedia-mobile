@@ -220,7 +220,6 @@ public class GroupChatActivity extends AppCompatActivity {
 
                         if (p_uriTask.isSuccessful()){
                             //image url received, save in db
-                            //timestamp
                             String timestamp = "" + System.currentTimeMillis();
 
                             HashMap<String, Object> hashMap = new HashMap<>();
@@ -230,7 +229,7 @@ public class GroupChatActivity extends AppCompatActivity {
                             hashMap.put("type", "" + "image");
 
                             DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Groups");
-                            ref.child(groupId).child("Messages").child(timestamp)
+                            ref.child(groupId).child("Message").child(timestamp)
                                     .setValue(hashMap)
                                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                                         @Override
@@ -242,7 +241,7 @@ public class GroupChatActivity extends AppCompatActivity {
                                         @Override
                                         public void onFailure(@NonNull Exception e) {
                                             pd.dismiss();
-                                            Toast.makeText(GroupChatActivity.this,"" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(GroupChatActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                                         }
                                     });
 
@@ -393,7 +392,7 @@ public class GroupChatActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == RESULT_OK){
+        if (resultCode == RESULT_OK){
             if (requestCode == IMAGE_PICK_GALLERY_CODE){
                 image_uri = data.getData();
                 sendImageMessage();
