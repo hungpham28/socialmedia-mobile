@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -27,6 +28,7 @@ import android.os.Bundle;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 import com.android.volley.AuthFailureError;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -115,19 +117,19 @@ public class AddPostActivity extends AppCompatActivity {
         //get data and its type from intent
         String action = intent.getAction();
         String type = intent.getType();
-        if (Intent.ACTION_SEND.equals(action) && type != null){
-            if ("text/plain".equals(type)){
+        if (Intent.ACTION_SEND.equals(action) && type != null) {
+            if ("text/plain".equals(type)) {
                 //text type data
                 handleSendText(intent);
-            }
-            else if (type.startsWith("image")){
+            } else if (type.startsWith("image")) {
                 //image type data
                 handleSendImage(intent);
             }
         }
 
-        String isUpdateKey = ""+intent.getStringExtra("key");
-        String editPostId = ""+intent.getStringExtra("editPostId");
+        String isUpdateKey = "" + intent.getStringExtra("key");
+        String editPostId = "" + intent.getStringExtra("editPostId");
+
         if (isUpdateKey.equals("editPost")) {
             actionBar.setTitle("Update Post");
             uploadBtn.setText("Update");
@@ -195,8 +197,8 @@ public class AddPostActivity extends AppCompatActivity {
 
     private void handleSendImage(Intent intent) {
         //handle the received image(uri)
-        Uri imageURI = (Uri)intent.getParcelableExtra(Intent.EXTRA_STREAM);
-        if (imageURI != null){
+        Uri imageURI = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        if (imageURI != null) {
             image_rui = imageURI;
             //set to imageview
             imageIv.setImageURI(image_rui);
@@ -206,7 +208,7 @@ public class AddPostActivity extends AppCompatActivity {
     private void handleSendText(Intent intent) {
         //handle the received text
         String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
-        if (sharedText != null){
+        if (sharedText != null) {
             descriptionEt.setText(sharedText);
         }
     }
@@ -214,12 +216,11 @@ public class AddPostActivity extends AppCompatActivity {
     private void beginUpdate(String title, String description, String editPostId) {
         pd.setMessage("Updating Post ...");
         pd.show();
-        if (!editImage.equals("NoImage")) {
+        if (!editImage.equals("noImage")) {
             updateWasWithImage(title, description, editPostId);
-        } else if(imageIv.getDrawable() != null) {
+        } else if (imageIv.getDrawable() != null) {
             updateWithNowImage(title, description, editPostId);
-        }else
-        {
+        } else {
             updateWithoutImage(title, description, editPostId);
         }
     }
@@ -298,7 +299,7 @@ public class AddPostActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         pd.dismiss();
-                        Toast.makeText(AddPostActivity.this,e.getMessage(),Toast.LENGTH_SHORT);
+                        Toast.makeText(AddPostActivity.this, e.getMessage(), Toast.LENGTH_SHORT);
                     }
                 });
             }
@@ -306,7 +307,7 @@ public class AddPostActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Exception e) {
                 pd.dismiss();
-                Toast.makeText(AddPostActivity.this,e.getMessage(),Toast.LENGTH_SHORT);
+                Toast.makeText(AddPostActivity.this, e.getMessage(), Toast.LENGTH_SHORT);
             }
         });
     }
@@ -356,7 +357,7 @@ public class AddPostActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Exception e) {
                 pd.dismiss();
-                Toast.makeText(AddPostActivity.this,e.getMessage(),Toast.LENGTH_SHORT);
+                Toast.makeText(AddPostActivity.this, e.getMessage(), Toast.LENGTH_SHORT);
             }
         });
     }
@@ -379,7 +380,6 @@ public class AddPostActivity extends AppCompatActivity {
                         try {
                             Picasso.get().load(editImage).into(imageIv);
                         } catch (Exception e) {
-
                         }
                     }
                 }
@@ -422,17 +422,17 @@ public class AddPostActivity extends AppCompatActivity {
                         //url is received upload post to firebase database
                         HashMap<Object, String> hashMap = new HashMap<>();
                         //put post info
-                        hashMap.put("uid",uid);
-                        hashMap.put("uName",name);
-                        hashMap.put("uEmail",email);
-                        hashMap.put("uDp",dp);
-                        hashMap.put("pId",timeStamp);
-                        hashMap.put("pTitle",title);
-                        hashMap.put("pDescr",description);
-                        hashMap.put("pImage",downloadUri);
-                        hashMap.put("pTime",timeStamp);
-                        hashMap.put("pLikes","0");
-                        hashMap.put("pComments","0");
+                        hashMap.put("uid", uid);
+                        hashMap.put("uName", name);
+                        hashMap.put("uEmail", email);
+                        hashMap.put("uDp", dp);
+                        hashMap.put("pId", timeStamp);
+                        hashMap.put("pTitle", title);
+                        hashMap.put("pDescr", description);
+                        hashMap.put("pImage", downloadUri);
+                        hashMap.put("pTime", timeStamp);
+                        hashMap.put("pLikes", "0");
+                        hashMap.put("pComments", "0");
 
                         //path to store post data
                         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
@@ -448,16 +448,16 @@ public class AddPostActivity extends AppCompatActivity {
                                         titleEt.setText("");
                                         descriptionEt.setText("");
                                         imageIv.setImageURI(null);
-                                        image_rui=null;
+                                        image_rui = null;
 
                                         //send notification
                                         prepareNotification(
-                                                ""+timeStamp,//since we are using timestamp for post id
-                                                ""+name+" added new post",
-                                                ""+description+"\n"+description,
+                                                "" + timeStamp,//since we are using timestamp for post id
+                                                "" + name + " added new post",
+                                                "" + description + "\n" + description,
                                                 "PostNotification",
                                                 "POST"
-                                                );
+                                        );
 
                                     }
                                 }).addOnFailureListener(new OnFailureListener() {
@@ -489,8 +489,8 @@ public class AddPostActivity extends AppCompatActivity {
             hashMap.put("pDescr", description);
             hashMap.put("pImage", "noImage");
             hashMap.put("pTime", timeStamp);
-            hashMap.put("pLikes","0");
-            hashMap.put("pComments","0");
+            hashMap.put("pLikes", "0");
+            hashMap.put("pComments", "0");
             //path to store post data
             DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
             //put data in this ref
@@ -505,13 +505,13 @@ public class AddPostActivity extends AppCompatActivity {
                             titleEt.setText("");
                             descriptionEt.setText("");
                             imageIv.setImageURI(null);
-                            image_rui=null;
+                            image_rui = null;
 
                             //send notification
                             prepareNotification(
-                                    ""+timeStamp,//since we are using timestamp for post id
-                                    ""+name+" added new post",
-                                    ""+title+"\n"+description,
+                                    "" + timeStamp,//since we are using timestamp for post id
+                                    "" + name + " added new post",
+                                    "" + title + "\n" + description,
                                     "PostNotification",
                                     "POST"
                             );
@@ -527,12 +527,12 @@ public class AddPostActivity extends AppCompatActivity {
         }
     }
 
-    private void prepareNotification(String pId, String title, String description, String notificationType, String notificationTopic){
+    private void prepareNotification(String pId, String title, String description, String notificationType, String notificationTopic) {
         //prepare data for notification
         String NOTIFICATION_TOPIC = "/topics/" + notificationTopic;// topic must match with what the receiver subscriber
-        String NOTIFICATION_TITLE= title;//e.g. Atif pervaiz added new post
-        String NOTIFICATION_MESSAGE= description;//content of post
-        String NOTIFICATION_TYPE =  notificationType;//there are two notification types chat & post
+        String NOTIFICATION_TITLE = title;//e.g. Atif pervaiz added new post
+        String NOTIFICATION_MESSAGE = description;//content of post
+        String NOTIFICATION_TYPE = notificationType;//there are two notification types chat & post
 
         //prepare json what to send, and where to send
         JSONObject notificationJo = new JSONObject();
@@ -540,16 +540,16 @@ public class AddPostActivity extends AppCompatActivity {
         try {
             notificationBodyJo.put("notificationType", NOTIFICATION_TYPE);
             notificationBodyJo.put("sender", uid);//uid of current user/sender
-            notificationBodyJo.put("pId",pId);//post id
+            notificationBodyJo.put("pId", pId);//post id
             notificationBodyJo.put("pTitle", NOTIFICATION_TITLE);
             notificationBodyJo.put("pDescription", NOTIFICATION_MESSAGE);
 
             //where to send
             notificationJo.put("to", NOTIFICATION_TOPIC);
 
-            notificationJo.put("data",notificationBodyJo);// combine data to be sent
+            notificationJo.put("data", notificationBodyJo);// combine data to be sent
         } catch (JSONException e) {
-            Toast.makeText(this,""+e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "" + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
 
         sendPostNotification(notificationJo);
@@ -557,7 +557,7 @@ public class AddPostActivity extends AppCompatActivity {
 
     private void sendPostNotification(JSONObject notificationJo) {
         //send volley object request
-        JsonObjectRequest jsonObjectRequest= new JsonObjectRequest("https://fcm.googleapis.com/fcm/send", notificationJo,
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest("https://fcm.googleapis.com/fcm/send", notificationJo,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
@@ -569,12 +569,12 @@ public class AddPostActivity extends AppCompatActivity {
                 //error occured
                 Toast.makeText(AddPostActivity.this, error.toString(), Toast.LENGTH_SHORT).show();
             }
-        }){
+        }) {
             public Map<String, String> getHeaders() throws AuthFailureError {
                 //put params
-                Map<String, String> headers=new HashMap<>();
-                headers.put("Content-Type","application/json");
-                headers.put("Authorization","key=AAAAloT5Lsw:APA91bGTjwvNeps0eEuuC-TLC1LLyTt3vqmovmpf8LCuOKxGzZ4wy9VmNCHnlhmQ5XN4FySrjVsfBU398kvNL_F4umPVCxqy3aamtKBM-Vuex4Bn5TMrFUSRcQhANP_9fKIXEdzpMD9i");
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Content-Type", "application/json");
+                headers.put("Authorization", "key=AAAAloT5Lsw:APA91bGTjwvNeps0eEuuC-TLC1LLyTt3vqmovmpf8LCuOKxGzZ4wy9VmNCHnlhmQ5XN4FySrjVsfBU398kvNL_F4umPVCxqy3aamtKBM-Vuex4Bn5TMrFUSRcQhANP_9fKIXEdzpMD9i");
 
                 return headers;
             }
@@ -587,9 +587,17 @@ public class AddPostActivity extends AppCompatActivity {
         //options (camera, gallery) to show in dialog
         String[] options = {"Camera", "Gallery"};
 
+        TextView textView = new TextView(this);
+        textView.setText("Pick Image From");
+        textView.setPadding(20, 30, 20, 30);
+        textView.setTextSize(20F);
+        textView.setBackgroundColor(Color.WHITE);
+        textView.setTextColor(Color.BLACK);
+
+
         //dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Choose Image from");
+        builder.setCustomTitle(textView);
         //set options to dialog
         builder.setItems(options, new DialogInterface.OnClickListener() {
             @Override

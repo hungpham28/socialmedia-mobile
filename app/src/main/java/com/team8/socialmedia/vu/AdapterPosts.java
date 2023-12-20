@@ -1,5 +1,6 @@
 package com.team8.socialmedia.vu;
 
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +10,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -66,7 +68,6 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
     private DatabaseReference likesRef;
     private DatabaseReference postsRef;
 
-
     public AdapterPosts(Context context, List<ModelPost> postList) {
         this.context = context;
         this.postList = postList;
@@ -83,7 +84,7 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
     }
 
     @Override
-    public void onBindViewHolder(@androidx.annotation.NonNull MyHolder holder, int position) {
+    public void onBindViewHolder(@androidx.annotation.NonNull MyHolder holder, @SuppressLint("RecyclerView") int position) {
         String uid = postList.get(position).getUid();
         String uEmail = postList.get(position).getuEmail();
         String uName = postList.get(position).getuName();
@@ -144,6 +145,8 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
                 mProcessLike = true;
                 //get id of the post clicked
                 final String postIde = postList.get(position).getpId();
+
+                Log.d("mProcessLike",String.valueOf(mProcessLike));
                 likesRef.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@androidx.annotation.NonNull @NotNull DataSnapshot snapshot) {
@@ -156,7 +159,6 @@ public class AdapterPosts extends RecyclerView.Adapter<AdapterPosts.MyHolder> {
                                 postsRef.child(postIde).child("pLikes").setValue("" + (pLikes + 1));
                                 likesRef.child(postIde).child(myUid).setValue("Liked");
                                 mProcessLike = false;
-
                                 addToHisNotifications("" + uid, "" + pId, "Liked your post");
                             }
                         }

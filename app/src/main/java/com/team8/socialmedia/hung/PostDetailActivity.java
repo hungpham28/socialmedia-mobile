@@ -15,14 +15,17 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.*;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.os.Bundle;
 
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -36,6 +39,7 @@ import com.team8.socialmedia.PostLikedByActivity;
 import com.team8.socialmedia.R;
 import com.team8.socialmedia.hung.adapters.AdapterComments;
 import com.team8.socialmedia.hung.models.ModelComment;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -45,7 +49,7 @@ import java.util.*;
 public class PostDetailActivity extends AppCompatActivity {
     //to get data of user and post
     String myUid, myEmail, myName, myDp, postId, pLikes, pImage,
-            hisDp, hisName,hisUid;
+            hisDp, hisName, hisUid;
 
     boolean mProcessComment = false;
     boolean mProcessLike = false;
@@ -107,7 +111,7 @@ public class PostDetailActivity extends AppCompatActivity {
 
         loadUserInfo();
 
-        setLikes();
+        setLikes(postId);
 
         loadComments();
 
@@ -146,11 +150,10 @@ public class PostDetailActivity extends AppCompatActivity {
                 String pDesription = pDescriptionTv.getText().toString().trim();
 
                 BitmapDrawable bitmapDrawable = (BitmapDrawable) pImageIv.getDrawable();
-                if (bitmapDrawable == null){
+                if (bitmapDrawable == null) {
                     //post without image
                     shareTextOnly(pTitle, pDescription);
-                }
-                else {
+                } else {
                     //post with to image
 
                     //convert image to bitmap
@@ -164,8 +167,8 @@ public class PostDetailActivity extends AppCompatActivity {
         pLikesTv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent= new Intent(PostDetailActivity.this, PostLikedByActivity.class);
-                intent.putExtra("postId",postId);
+                Intent intent = new Intent(PostDetailActivity.this, PostLikedByActivity.class);
+                intent.putExtra("postId", postId);
                 startActivity(intent);
             }
         });
@@ -173,15 +176,16 @@ public class PostDetailActivity extends AppCompatActivity {
 
     private void shareTextOnly(String pTitle, String pDescription) {
         //concatenate title and decription to share
-        String shareBody = pTitle+"\n"+pDescription;
+        String shareBody = pTitle + "\n" + pDescription;
 
         //share intent
         Intent sIntent = new Intent(Intent.ACTION_SEND);
         sIntent.setType("text/plain");
-        sIntent.putExtra(Intent.EXTRA_SUBJECT,"Subject Here");// in case you share via an email app
+        sIntent.putExtra(Intent.EXTRA_SUBJECT, "Subject Here");// in case you share via an email app
         sIntent.putExtra(Intent.EXTRA_TEXT, shareBody); //text to share
-        startActivity(Intent.createChooser(sIntent,"Share Via")); //message to show in share dialog
+        startActivity(Intent.createChooser(sIntent, "Share Via")); //message to show in share dialog
     }
+
     private void shareImageAndText(String pTitle, String pDescription, Bitmap bitmap) {
         //concatenate title and description to share
         String shareBody = pTitle + "\n" + pDescription;
@@ -193,28 +197,27 @@ public class PostDetailActivity extends AppCompatActivity {
         Intent sIntent = new Intent(Intent.ACTION_SEND);
         sIntent.putExtra(Intent.EXTRA_STREAM, uri);
         sIntent.putExtra(Intent.EXTRA_TEXT, shareBody);
-        sIntent.putExtra(Intent.EXTRA_SUBJECT,"Subject Here");
+        sIntent.putExtra(Intent.EXTRA_SUBJECT, "Subject Here");
         sIntent.setType("image/png");
-        startActivity(Intent.createChooser(sIntent,"Share Via"));
+        startActivity(Intent.createChooser(sIntent, "Share Via"));
 
     }
 
     private Uri saveImageToShare(Bitmap bitmap) {
-        File imageFolder = new File(getCacheDir(),"images");
+        File imageFolder = new File(getCacheDir(), "images");
         Uri uir = null;
         try {
             imageFolder.mkdir();//create if not exists
             File file = new File(imageFolder, "shared_image.png");
 
             FileOutputStream stream = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.PNG,90,stream);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 90, stream);
             stream.flush();
             stream.close();
-            uir = FileProvider.getUriForFile(this,"com.blogspot.atifsoftwares.firebaseapp.fileprovider",file);
+            uir = FileProvider.getUriForFile(this, "com.blogspot.atifsoftwares.firebaseapp.fileprovider", file);
 
-        }
-        catch (Exception e){
-            Toast.makeText(this, ""+ e.getMessage(), Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "" + e.getMessage(), Toast.LENGTH_SHORT).show();
 
         }
         return uir;
@@ -238,14 +241,14 @@ public class PostDetailActivity extends AppCompatActivity {
             public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
                 System.out.println("get comments");
                 commentList.clear();
-                for (DataSnapshot ds: snapshot.getChildren()){
+                for (DataSnapshot ds : snapshot.getChildren()) {
                     ModelComment modelComment = ds.getValue(ModelComment.class);
                     commentList.add(modelComment);
 
 
                 }
                 //setup adapter
-                adapterComments = new AdapterComments(getApplicationContext(),commentList,myUid,postId);
+                adapterComments = new AdapterComments(getApplicationContext(), commentList, myUid, postId);
                 //set adapter
                 recyclerView.setAdapter(adapterComments);
             }
@@ -354,17 +357,17 @@ public class PostDetailActivity extends AppCompatActivity {
         });
     }
 
-    private void setLikes() {
-        final DatabaseReference likesRef= FirebaseDatabase.getInstance().getReference().child("Likes");
+    private void setLikes(String postKey) {
+        final DatabaseReference likesRef = FirebaseDatabase.getInstance().getReference().child("Likes");
 
         likesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@androidx.annotation.NonNull @NotNull DataSnapshot snapshot) {
-                if(snapshot.child(postId).hasChild(myUid)){
+                if (snapshot.child(postKey).hasChild(myUid)) {
                     //user has liked this post
                     likeBtn.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_liked, 0, 0, 0);
                     likeBtn.setText("Liked");
-                }else {
+                } else {
                     //user has not liked this post
                     likeBtn.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_like_black, 0, 0, 0);
                     likeBtn.setText("Like");
@@ -385,24 +388,22 @@ public class PostDetailActivity extends AppCompatActivity {
         //increase value by i, otherwise decrease value by 1
         mProcessLike = true;
         //get id of the post clicked
-        final DatabaseReference likesRef= FirebaseDatabase.getInstance().getReference().child("Likes");
-        final DatabaseReference postsRef= FirebaseDatabase.getInstance().getReference().child("Posts");
+        final DatabaseReference likesRef = FirebaseDatabase.getInstance().getReference().child("Likes");
+        final DatabaseReference postsRef = FirebaseDatabase.getInstance().getReference().child("Posts");
         likesRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@androidx.annotation.NonNull @NotNull DataSnapshot snapshot) {
                 if (mProcessLike) {
-                    //already liked, so remove like
-                    postsRef.child(postId).child("pLikes").setValue("" + ( Integer.parseInt(pLikes) - 1));
-                    postsRef.child(postId).child(myUid).removeValue();
-                    mProcessLike = false;
-
-                } else {
-                    //not liked, like it
-                    postsRef.child(postId).child("pLikes").setValue("" + (Integer.parseInt(pLikes) + 1));
-                    likesRef.child(postId).child(myUid).setValue("Liked");
-                    mProcessLike = false;
-
-                    addToHisNotifications(""+hisUid,""+postId,"Liked your post");
+                    if (snapshot.child(postId).hasChild(myUid)) {
+                        postsRef.child(postId).child("pLikes").setValue("" + (Integer.parseInt(pLikes) - 1));
+                        likesRef.child(postId).child(myUid).removeValue();
+                        mProcessLike = false;
+                    } else {
+                        postsRef.child(postId).child("pLikes").setValue("" + (Integer.parseInt(pLikes) + 1));
+                        likesRef.child(postId).child(myUid).setValue("Liked");
+                        mProcessLike = false;
+                        addToHisNotifications("" + hisUid, "" + postId, "Liked your post");
+                    }
                 }
             }
 
@@ -413,15 +414,16 @@ public class PostDetailActivity extends AppCompatActivity {
         });
 
     }
-    private void addToHisNotifications(String hisUid, String pId,String notification){
-        String timestamp = ""+System.currentTimeMillis();
 
-        HashMap<Object, String> hashMap= new HashMap<>();
-        hashMap.put("pId",pId);
-        hashMap.put("timestamp",timestamp);
+    private void addToHisNotifications(String hisUid, String pId, String notification) {
+        String timestamp = "" + System.currentTimeMillis();
+
+        HashMap<Object, String> hashMap = new HashMap<>();
+        hashMap.put("pId", pId);
+        hashMap.put("timestamp", timestamp);
         hashMap.put("pUid", hisUid);
-        hashMap.put("notification",notification);
-        hashMap.put("sUid",myUid);
+        hashMap.put("notification", notification);
+        hashMap.put("sUid", myUid);
 
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Users");
         ref.child(hisUid).child("Notifications").child(timestamp).setValue(hashMap)
@@ -438,6 +440,7 @@ public class PostDetailActivity extends AppCompatActivity {
                 });
 
     }
+
     private void postComment() {
         pd = new ProgressDialog(this);
         pd.setMessage("Adding comment ...");
@@ -474,7 +477,7 @@ public class PostDetailActivity extends AppCompatActivity {
                         commentEt.setText("");
                         updateCommentCount();
 
-                        addToHisNotifications(""+hisUid, ""+postId, "Commented on your post");
+                        addToHisNotifications("" + hisUid, "" + postId, "Commented on your post");
                     }
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override

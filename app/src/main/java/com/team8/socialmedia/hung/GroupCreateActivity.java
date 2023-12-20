@@ -14,6 +14,7 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -21,6 +22,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -212,12 +214,16 @@ public class GroupCreateActivity extends AppCompatActivity {
     }
 
     private void showImagePickDialog() {
-        //options to pick image from
-        String[] options = {"Camera","Gallery"};
-        //diaglog
+        String[] options = {"Camera", "Gallery"};
+        TextView textView = new TextView(this);
+        textView.setText("Pick Image From");
+        textView.setPadding(20, 30, 20, 30);
+        textView.setTextSize(20F);
+        textView.setBackgroundColor(Color.WHITE);
+        textView.setTextColor(Color.BLACK);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Pick Image:")
-                .setItems(options, new DialogInterface.OnClickListener() {
+        builder.setCustomTitle(textView);
+        builder.setItems(options, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == 0) {

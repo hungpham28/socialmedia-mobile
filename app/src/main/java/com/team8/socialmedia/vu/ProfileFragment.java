@@ -80,7 +80,6 @@ public class ProfileFragment extends Fragment {
     ImageView avatarIv, coverIv;
     TextView nameTv, emailTv, phoneTv;
     FloatingActionButton fab;
-
     RecyclerView postsRecyclerView;
     ProgressDialog pd;
     private static final int CAMERA_REQUEST_CODE = 100;
@@ -90,7 +89,6 @@ public class ProfileFragment extends Fragment {
     String cameraPermissions[];
     String storagePermissions[];
     Uri image_uri;
-
     List<ModelPost> postList;
     AdapterPosts adapterPosts;
     String uid;
@@ -121,7 +119,6 @@ public class ProfileFragment extends Fragment {
         phoneTv = view.findViewById(R.id.phoneTv);
         fab = view.findViewById(R.id.fab);
         postsRecyclerView = view.findViewById(R.id.recyclerview_posts);
-
 
         pd = new ProgressDialog(getActivity());
 
@@ -183,16 +180,16 @@ public class ProfileFragment extends Fragment {
         postsRecyclerView.setLayoutManager(layoutManager);
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
         Query query = ref.orderByChild("uid").equalTo(uid);
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
+        query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 postList.clear();
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     ModelPost myPosts = ds.getValue(ModelPost.class);
                     postList.add(myPosts);
-                    adapterPosts = new AdapterPosts(getActivity(), postList);
-                    postsRecyclerView.setAdapter(adapterPosts);
                 }
+                adapterPosts = new AdapterPosts(getActivity(), postList);
+                postsRecyclerView.setAdapter(adapterPosts);
             }
 
             @Override
@@ -209,7 +206,7 @@ public class ProfileFragment extends Fragment {
         postsRecyclerView.setLayoutManager(layoutManager);
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
         Query query = ref.orderByChild("uid").equalTo(uid);
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
+        query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 postList.clear();
@@ -372,6 +369,7 @@ public class ProfileFragment extends Fragment {
 
     private void showImagePicDialog() {
         String options[] = {"Camera", "Gallery"};
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Pick Image From");
         builder.setItems(options, new DialogInterface.OnClickListener() {
@@ -465,7 +463,6 @@ public class ProfileFragment extends Fragment {
                                                     String child = ds.getKey();
                                                     snapshot.getRef().child(child).child("uName").setValue(value);
                                                 }
-
                                             }
 
                                             @Override

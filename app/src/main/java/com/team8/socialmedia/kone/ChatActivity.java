@@ -17,6 +17,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -108,7 +109,7 @@ public class ChatActivity extends AppCompatActivity {
     String myUid;
     String hisImage;
     private RequestQueue requestQueue;
-     private boolean isBlocked = false;
+    private boolean isBlocked = false;
 
 
     private boolean notify = false;
@@ -124,7 +125,7 @@ public class ChatActivity extends AppCompatActivity {
     String[] cameraPermissions;
     String[] storagePermissions;
     //image picked will be samed in this uri
-    Uri image_rui=null;
+    Uri image_rui = null;
     String name, email, uid, dp;
     EditText titleEt, descriptionEt;
     ImageView imageTv, blockIv;
@@ -246,7 +247,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
         //click button to send image
-        attachBtn.setOnClickListener(new View.OnClickListener(){
+        attachBtn.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -277,13 +278,12 @@ public class ChatActivity extends AppCompatActivity {
 
             }
         });
-        blockIv.setOnClickListener(new View.OnClickListener(){
+        blockIv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isBlocked){
+                if (isBlocked) {
                     unBlockUser();
-                }
-                else {
+                } else {
                     blockUser();
                 }
 
@@ -291,7 +291,7 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         readMessages();
-        
+
         checkIsBlocked();
 
         seenMessage();
@@ -306,8 +306,8 @@ public class ChatActivity extends AppCompatActivity {
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        for (DataSnapshot ds: snapshot.getChildren()){
-                            if (ds.exists()){
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            if (ds.exists()) {
                                 blockIv.setImageResource(R.drawable.ic_blocked_red);
                                 isBlocked = true;
                             }
@@ -343,7 +343,7 @@ public class ChatActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         //failed to block
-                        Toast.makeText(ChatActivity.this, "Failed"+e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ChatActivity.this, "Failed" + e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -356,8 +356,8 @@ public class ChatActivity extends AppCompatActivity {
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        for (DataSnapshot ds: snapshot.getChildren()){
-                            if (ds.exists()){
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            if (ds.exists()) {
                                 //remove blocked user data from current user's BlockUsers List
                                 ds.getRef().removeValue()
                                         .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -372,7 +372,7 @@ public class ChatActivity extends AppCompatActivity {
                                             @Override
                                             public void onFailure(@NonNull Exception e) {
                                                 //failed to unblock
-                                                Toast.makeText(ChatActivity.this, "Failed"+e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                Toast.makeText(ChatActivity.this, "Failed" + e.getMessage(), Toast.LENGTH_SHORT).show();
                                             }
                                         });
                             }
@@ -393,33 +393,33 @@ public class ChatActivity extends AppCompatActivity {
         //for post-image name,post-id, post-publish-time
         String timeStamp = String.valueOf(System.currentTimeMillis());
 
-        String filePathAndName = "Post/"+"post_"+timeStamp;
+        String filePathAndName = "Post/" + "post_" + timeStamp;
 
-        if(!uri.equals("noImage")){
+        if (!uri.equals("noImage")) {
             //post with image
             StorageReference ref = FirebaseStorage.getInstance().getReference().child(filePathAndName);
             ref.putFile(Uri.parse(uri)).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                     //image is uploaded to firebase storage, now get it's uri
-                    Task<Uri> uriTask= taskSnapshot.getStorage().getDownloadUrl();
-                    while(!uriTask.isSuccessful());
+                    Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
+                    while (!uriTask.isSuccessful()) ;
 
                     String downloadUri = uriTask.getResult().toString();
 
-                    if(uriTask.isSuccessful()){
+                    if (uriTask.isSuccessful()) {
                         //url is received upload post to firebase database
-                        HashMap<Object, String> hashMap=new HashMap<>();
+                        HashMap<Object, String> hashMap = new HashMap<>();
                         //put post info
-                        hashMap.put("uid",uid);
-                        hashMap.put("uName",name);
-                        hashMap.put("uEmai",email);
-                        hashMap.put("uDp",dp);
-                        hashMap.put("pId",timeStamp);
-                        hashMap.put("pTitle",title);
-                        hashMap.put("pDescr",description);
-                        hashMap.put("pImage",downloadUri);
-                        hashMap.put("pTime",timeStamp);
+                        hashMap.put("uid", uid);
+                        hashMap.put("uName", name);
+                        hashMap.put("uEmai", email);
+                        hashMap.put("uDp", dp);
+                        hashMap.put("pId", timeStamp);
+                        hashMap.put("pTitle", title);
+                        hashMap.put("pDescr", description);
+                        hashMap.put("pImage", downloadUri);
+                        hashMap.put("pTime", timeStamp);
                         //path to store post data
                         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
                         //put data in this ref
@@ -429,43 +429,43 @@ public class ChatActivity extends AppCompatActivity {
                                     public void onSuccess(Void unused) {
                                         //added to database
                                         pd.dismiss();
-                                        Toast.makeText(ChatActivity.this,"Post published", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(ChatActivity.this, "Post published", Toast.LENGTH_SHORT).show();
                                         //reset views
                                         titleEt.setText("");
                                         descriptionEt.setText("");
                                         imageTv.setImageURI(null);
-                                        image_rui=null;
+                                        image_rui = null;
                                     }
                                 }).addOnFailureListener(new OnFailureListener() {
                                     @Override
                                     public void onFailure(@NonNull @NotNull Exception e) {
                                         //failed adding post to database
                                         pd.dismiss();
-                                        Toast.makeText(ChatActivity.this,e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(ChatActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                                     }
                                 });
 
                     }
                 }
             }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull @NotNull Exception e) {
+                @Override
+                public void onFailure(@NonNull @NotNull Exception e) {
 
                 }
             });
-        }else{
+        } else {
             //post without image
-            HashMap<Object, String> hashMap=new HashMap<>();
+            HashMap<Object, String> hashMap = new HashMap<>();
             //put post info
-            hashMap.put("uid",uid);
-            hashMap.put("uName",name);
-            hashMap.put("uEmai",email);
-            hashMap.put("uDp",dp);
-            hashMap.put("pId",timeStamp);
-            hashMap.put("pTitle",title);
-            hashMap.put("pDescr",description);
-            hashMap.put("pImage","noImage");
-            hashMap.put("pTime",timeStamp);
+            hashMap.put("uid", uid);
+            hashMap.put("uName", name);
+            hashMap.put("uEmai", email);
+            hashMap.put("uDp", dp);
+            hashMap.put("pId", timeStamp);
+            hashMap.put("pTitle", title);
+            hashMap.put("pDescr", description);
+            hashMap.put("pImage", "noImage");
+            hashMap.put("pTime", timeStamp);
             //path to store post data
             DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
             //put data in this ref
@@ -475,19 +475,19 @@ public class ChatActivity extends AppCompatActivity {
                         public void onSuccess(Void unused) {
                             //added to database
                             pd.dismiss();
-                            Toast.makeText(ChatActivity.this,"Post published", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(ChatActivity.this, "Post published", Toast.LENGTH_SHORT).show();
                             //reset views
                             titleEt.setText("");
                             descriptionEt.setText("");
                             imageTv.setImageURI(null);
-                            image_rui=null;
+                            image_rui = null;
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull @NotNull Exception e) {
                             //failed addming post to database
                             pd.dismiss();
-                            Toast.makeText(ChatActivity.this,e.getMessage(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(ChatActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
         }
@@ -497,9 +497,16 @@ public class ChatActivity extends AppCompatActivity {
         //options (camera, gallery) to show in dialog
         String[] options = {"Camera", "Gallery"};
 
+        TextView textView = new TextView(this);
+        textView.setText("Pick Image From");
+        textView.setPadding(20, 30, 20, 30);
+        textView.setTextSize(20F);
+        textView.setBackgroundColor(Color.WHITE);
+        textView.setTextColor(Color.BLACK);
+
         //dialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(ChatActivity.this);
-        builder.setTitle("Choose Image from");
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCustomTitle(textView);
         //set options to dialog
         builder.setItems(options, new DialogInterface.OnClickListener() {
             @Override
@@ -508,9 +515,9 @@ public class ChatActivity extends AppCompatActivity {
                 if (which == 0) {
                     System.out.println("Camera");
                     //camera clicked
-                    if (!checkCameraPermission()){
+                    if (!checkCameraPermission()) {
                         requestCameraPermission();
-                    }else{
+                    } else {
                         pickFromCamera();
                     }
                 }
@@ -532,12 +539,12 @@ public class ChatActivity extends AppCompatActivity {
     private void pickFromCamera() {
         //intent to pick image from camera
         ContentValues cv = new ContentValues();
-        cv.put(MediaStore.Images.Media.TITLE,"Temp Pick");
-        cv.put(MediaStore.Images.Media.DESCRIPTION,"Temp Desr");
+        cv.put(MediaStore.Images.Media.TITLE, "Temp Pick");
+        cv.put(MediaStore.Images.Media.DESCRIPTION, "Temp Desr");
         image_rui = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
         System.out.println("pick Camera");
-        Intent intent=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT,image_rui);
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, image_rui);
         startActivityForResult(intent, IMAGE_PICK_CAMERA_CODE);
     }
 
@@ -547,8 +554,9 @@ public class ChatActivity extends AppCompatActivity {
         //intent to pick image from gallery
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setType("image/*");
-        startActivityForResult(intent,IMAGE_PICK_GALLERY_CODE);
+        startActivityForResult(intent, IMAGE_PICK_GALLERY_CODE);
     }
+
     private boolean checkStoragePermission() {
         //check if storage permission is enabled or not
         //return true if enabled
@@ -563,6 +571,7 @@ public class ChatActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(this, storagePermissions, STORAGE_REQUEST_CODE);
 
     }
+
     private void requestCameraPermission() {
         //request runtime camera permission
         ActivityCompat.requestPermissions(this, cameraPermissions, CAMERA_REQUEST_CODE);
@@ -676,7 +685,7 @@ public class ChatActivity extends AppCompatActivity {
         chatRef1.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if(!snapshot.exists()){
+                if (!snapshot.exists()) {
                     chatRef1.child("id").setValue(hisUid);
                 }
 
@@ -695,7 +704,7 @@ public class ChatActivity extends AppCompatActivity {
         chatRef2.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if(!snapshot.exists()){
+                if (!snapshot.exists()) {
                     chatRef2.child("id").setValue(myUid);
                 }
 
@@ -735,10 +744,10 @@ public class ChatActivity extends AppCompatActivity {
                         progressDialog.dismiss();
                         //get url of uploaded image
                         Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
-                        while (!uriTask.isSuccessful());
+                        while (!uriTask.isSuccessful()) ;
                         String downloadUri = uriTask.getResult().toString();
 
-                        if(uriTask.isSuccessful()){
+                        if (uriTask.isSuccessful()) {
                             //add image uri and other info to database
                             DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
                             //set reuired data
@@ -758,8 +767,8 @@ public class ChatActivity extends AppCompatActivity {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                                     ModelUser user = snapshot.getValue(ModelUser.class);
-                                    if (notify){
-                                        senNotification(hisUid, user.getName(),"Sent you a photo...");
+                                    if (notify) {
+                                        senNotification(hisUid, user.getName(), "Sent you a photo...");
                                     }
                                     notify = false;
                                 }
@@ -778,7 +787,7 @@ public class ChatActivity extends AppCompatActivity {
                             chatRef1.addValueEventListener(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                    if(!snapshot.exists()){
+                                    if (!snapshot.exists()) {
                                         chatRef1.child("id").setValue(hisUid);
                                     }
 
@@ -797,7 +806,7 @@ public class ChatActivity extends AppCompatActivity {
                             chatRef2.addValueEventListener(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                    if(!snapshot.exists()){
+                                    if (!snapshot.exists()) {
                                         chatRef2.child("id").setValue(myUid);
                                     }
 
@@ -946,51 +955,49 @@ public class ChatActivity extends AppCompatActivity {
 
         //this method is called when user press Allow or deny from permission request dialog
         //here we will handle permission cases (allowed and denied)
-        switch (requestCode){
-            case CAMERA_REQUEST_CODE:{
+        switch (requestCode) {
+            case CAMERA_REQUEST_CODE: {
                 System.out.println("CAMERA_REQUEST_CODE");
-                if (grantResults.length>0){
-                    boolean cameraAccepted= grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                    boolean storageAccepted= grantResults[1] == PackageManager.PERMISSION_GRANTED;
-                    if(cameraAccepted && storageAccepted){
+                if (grantResults.length > 0) {
+                    boolean cameraAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                    boolean storageAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
+                    if (cameraAccepted && storageAccepted) {
                         //both permission are granted
                         pickFromCamera();
                     }
-                }
-                else{
+                } else {
                     //camera or gallery or both permissions are denied
-                    Toast.makeText(this,"Camera & storage both permissions are necessary",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Camera & storage both permissions are necessary", Toast.LENGTH_SHORT).show();
                 }
                 break;
             }
-            case STORAGE_REQUEST_CODE:{
+            case STORAGE_REQUEST_CODE: {
                 System.out.println("STORAGE_REQUEST_CODE");
-                if(grantResults.length>0){
+                if (grantResults.length > 0) {
                     boolean storageAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                    if(storageAccepted){
+                    if (storageAccepted) {
                         //storage permission granted
                         pickFromGallery();
-                    }else{
+                    } else {
                         //camera or gallery or both permissions were denied
-                        Toast.makeText(this,"Storage permissions | necessary...", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Storage permissions | necessary...", Toast.LENGTH_SHORT).show();
                     }
-                }
-                else {
+                } else {
 
+                }
             }
+            break;
         }
-        break;
-    }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-}
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable @org.jetbrains.annotations.Nullable Intent data) {
         //this method will be called after picking image from camera or gallery
-        if(resultCode == RESULT_OK){
-            if (requestCode == IMAGE_PICK_GALLERY_CODE){
+        if (resultCode == RESULT_OK) {
+            if (requestCode == IMAGE_PICK_GALLERY_CODE) {
                 //image is picked from gallery, get uri of image
-                image_rui=data.getData();
+                image_rui = data.getData();
 
                 //use this image uri to upload to firebase storegae
                 try {
@@ -999,8 +1006,7 @@ public class ChatActivity extends AppCompatActivity {
                     throw new RuntimeException(e);
                 }
 
-            }
-            else if(requestCode== IMAGE_PICK_CAMERA_CODE){
+            } else if (requestCode == IMAGE_PICK_CAMERA_CODE) {
                 //image is picked from camer, get uri of image
                 try {
                     sendImageMessage(image_rui);

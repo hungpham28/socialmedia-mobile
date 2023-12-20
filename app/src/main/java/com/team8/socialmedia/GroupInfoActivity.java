@@ -8,8 +8,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.format.DateFormat;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -109,9 +113,15 @@ public class GroupInfoActivity extends AppCompatActivity {
                     dialogDescription = "Are you sure want to Leave group permanently?";
                     positiveButtonTitle = "LEAVE";
                 }
+                SpannableString title = new SpannableString(dialogTitle);
+                title.setSpan(new ForegroundColorSpan(Color.BLACK), 0, title.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+
+                SpannableString description = new SpannableString(dialogDescription);
+                description.setSpan(new ForegroundColorSpan(Color.BLACK), 0, description.length(), Spannable.SPAN_INCLUSIVE_INCLUSIVE);
+
                 AlertDialog.Builder builder = new AlertDialog.Builder(GroupInfoActivity.this);
-                builder.setTitle(dialogTitle)
-                        .setMessage(dialogDescription)
+                builder.setTitle(title)
+                        .setMessage(description)
                         .setPositiveButton(positiveButtonTitle, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {

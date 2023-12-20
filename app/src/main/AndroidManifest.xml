@@ -69,18 +69,13 @@ Intent filters inform system what intents an application compoment is willing to
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:mimeType="image/*" />
             </intent-filter>
             <intent-filter>
-
                 <!-- For Text -->
                 <action android:name="android.intent.action.SEND" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:mimeType="text/*" />
             </intent-filter>
         </activity>
@@ -104,14 +99,17 @@ Intent filters inform system what intents an application compoment is willing to
             android:exported="false" />
         <activity
             android:name=".MainActivity"
-            android:exported="false" /> <!-- <service -->
-        <!-- android:name=".vu.notifications.FirebaseService" -->
-        <!-- android:enabled="true" -->
-        <!-- android:exported="true"> -->
-        <!-- <intent-filter> -->
-        <!-- <action android:name="com.google.firebase.INSTANCE_ID_SERVICE" /> -->
-        <!-- </intent-filter> -->
-        <!-- </service> -->
+            android:exported="false" />
+
+        <service
+            android:name=".vu.notifications.FirebaseService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_SERVICE" />
+            </intent-filter>
+        </service>
+
         <service
             android:name=".vu.notifications.FirebaseMessaging"
             android:enabled="true"

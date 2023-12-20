@@ -15,6 +15,7 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -128,27 +129,30 @@ public class GroupChatActivity extends AppCompatActivity {
     private void showImageImportDialog() {
         String[] options = {"Camera", "Gallery"};
 
+        TextView textView = new TextView(this);
+        textView.setText("Pick Image From");
+        textView.setPadding(20, 30, 20, 30);
+        textView.setTextSize(20F);
+        textView.setBackgroundColor(Color.WHITE);
+        textView.setTextColor(Color.BLACK);
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Pick Image")
-                .setItems(options, new DialogInterface.OnClickListener(){
+        builder.setCustomTitle(textView);
+        builder.setItems(options, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (which == 0){
+                        if (which == 0) {
                             //camera clicked
-                            if (!checkCameraPermission()){
-
+                            if (!checkCameraPermission()) {
                                 requestCameraPermission();
-                            }
-                            else {
+                            } else {
                                 pickCamera();
                             }
-                        }
-                        else {
+                        } else {
                             //gallery clicked
-                            if (!checkStoragePermission()){
+                            if (!checkStoragePermission()) {
                                 requestStoragePermission();
-                            }
-                            else {
+                            } else {
                                 pickGallery();
                             }
                         }
@@ -157,12 +161,14 @@ public class GroupChatActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void pickGallery(){
+    private void pickGallery() {
+        //intent to pick image from gallery
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setType("image/*");
         startActivityForResult(intent, IMAGE_PICK_GALLERY_CODE);
     }
-    private void pickCamera(){
+
+    private void pickCamera() {
         ContentValues contentValues = new ContentValues();
         contentValues.put(MediaStore.Images.Media.TITLE, "GroupImageTitle");
         contentValues.put(MediaStore.Images.Media.DESCRIPTION, "GroupImageDescription");
@@ -174,21 +180,20 @@ public class GroupChatActivity extends AppCompatActivity {
         startActivityForResult(intent, IMAGE_PICK_CAMERA_CODE);
     }
 
-    private void requestStoragePermission(){
+    private void requestStoragePermission() {
         ActivityCompat.requestPermissions(this, storagePermission, STORAGE_REQUEST_CODE);
     }
 
-    private boolean checkStoragePermission(){
+    private boolean checkStoragePermission() {
         boolean result = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == (PackageManager.PERMISSION_GRANTED);
-
         return result;
     }
 
-    private void requestCameraPermission(){
+    private void requestCameraPermission() {
         ActivityCompat.requestPermissions(this, cameraPermission, CAMERA_REQUEST_CODE);
     }
 
-    private boolean checkCameraPermission(){
+    private boolean checkCameraPermission() {
         boolean result = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == (PackageManager.PERMISSION_GRANTED);
         boolean result1 = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == (PackageManager.PERMISSION_GRANTED);
 
@@ -215,10 +220,10 @@ public class GroupChatActivity extends AppCompatActivity {
                         //image upload, get url
 
                         Task<Uri> p_uriTask = taskSnapshot.getStorage().getDownloadUrl();
-                        while (!p_uriTask.isSuccessful());
+                        while (!p_uriTask.isSuccessful()) ;
                         Uri p_downloadUri = p_uriTask.getResult();
 
-                        if (p_uriTask.isSuccessful()){
+                        if (p_uriTask.isSuccessful()) {
                             //image url received, save in db
                             String timestamp = "" + System.currentTimeMillis();
 
@@ -379,8 +384,7 @@ public class GroupChatActivity extends AppCompatActivity {
             Intent intent = new Intent(this, GroupParticipantAddActivity.class);
             intent.putExtra("groupId", groupId);
             startActivity(intent);
-        }
-        else if (id == R.id.action_groupInfo) {
+        } else if (id == R.id.action_groupInfo) {
             Intent intent = new Intent(this, GroupInfoActivity.class);
             intent.putExtra("groupId", groupId);
             startActivity(intent);
@@ -392,42 +396,33 @@ public class GroupChatActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK){
-            if (requestCode == IMAGE_PICK_GALLERY_CODE){
+        if (resultCode == RESULT_OK) {
+            if (requestCode == IMAGE_PICK_GALLERY_CODE) {
                 image_uri = data.getData();
                 sendImageMessage();
             }
-            if (requestCode == IMAGE_PICK_CAMERA_CODE){
+            if (requestCode == IMAGE_PICK_CAMERA_CODE) {
                 sendImageMessage();
             }
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults){
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode){
+        switch (requestCode) {
             case CAMERA_REQUEST_CODE:
-                if (grantResults.length > 0){
+                if (grantResults.length > 0) {
                     boolean cameraAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
                     boolean writeStorageAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
-                    if (cameraAccepted && writeStorageAccepted){
-                        pickCamera();
-                    }
-                    else {
-                        Toast.makeText(this, "Camera & Storage permissions are required...", Toast.LENGTH_SHORT).show();
-                    }
+                    pickCamera();
                 }
                 break;
             case STORAGE_REQUEST_CODE:
-                if (grantResults.length > 0){
+                if (grantResults.length > 0) {
                     boolean writeStorageAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                    if (writeStorageAccepted){
-                        pickGallery();
-                    }
-                    else {
-                        Toast.makeText(this, "Storage permission required...", Toast.LENGTH_SHORT).show();
-                    }
+                    pickGallery();
+
                 }
                 break;
         }
