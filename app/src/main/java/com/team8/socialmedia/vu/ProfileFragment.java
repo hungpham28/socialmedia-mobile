@@ -32,6 +32,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -43,6 +44,8 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -59,6 +62,8 @@ import com.squareup.picasso.Picasso;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
 import com.team8.socialmedia.hung.AddPostActivity;
+import com.team8.socialmedia.hung.SettingsActivity;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,7 +80,6 @@ public class ProfileFragment extends Fragment {
     ImageView avatarIv, coverIv;
     TextView nameTv, emailTv, phoneTv;
     FloatingActionButton fab;
-
     RecyclerView postsRecyclerView;
     ProgressDialog pd;
     private static final int CAMERA_REQUEST_CODE = 100;
@@ -85,7 +89,6 @@ public class ProfileFragment extends Fragment {
     String cameraPermissions[];
     String storagePermissions[];
     Uri image_uri;
-
     List<ModelPost> postList;
     AdapterPosts adapterPosts;
     String uid;
@@ -116,7 +119,6 @@ public class ProfileFragment extends Fragment {
         phoneTv = view.findViewById(R.id.phoneTv);
         fab = view.findViewById(R.id.fab);
         postsRecyclerView = view.findViewById(R.id.recyclerview_posts);
-
 
         pd = new ProgressDialog(getActivity());
 
@@ -178,16 +180,16 @@ public class ProfileFragment extends Fragment {
         postsRecyclerView.setLayoutManager(layoutManager);
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
         Query query = ref.orderByChild("uid").equalTo(uid);
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
+        query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 postList.clear();
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     ModelPost myPosts = ds.getValue(ModelPost.class);
                     postList.add(myPosts);
-                    adapterPosts = new AdapterPosts(getActivity(), postList);
-                    postsRecyclerView.setAdapter(adapterPosts);
                 }
+                adapterPosts = new AdapterPosts(getActivity(), postList);
+                postsRecyclerView.setAdapter(adapterPosts);
             }
 
             @Override
@@ -204,7 +206,7 @@ public class ProfileFragment extends Fragment {
         postsRecyclerView.setLayoutManager(layoutManager);
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Posts");
         Query query = ref.orderByChild("uid").equalTo(uid);
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
+        query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 postList.clear();
@@ -255,8 +257,9 @@ public class ProfileFragment extends Fragment {
         // Edit Cover Photo
         // Edit Name
         // Edit Phone
+        // Change Password
 
-        String options[] = {"Edit Profile Picture", "Edit Cover Photo", "Edit Name", "Edit Phone"};
+        String options[] = {"Edit Profile Picture", "Edit Cover Photo", "Edit Name", "Edit Phone", "Change Password"};
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Choose Action");
         builder.setItems(options, new DialogInterface.OnClickListener() {
@@ -276,6 +279,9 @@ public class ProfileFragment extends Fragment {
                 } else if (which == 3) {
                     pd.setMessage("Updating Phone");
                     showNamePhoneUpdateDialog("phone");
+                } else if (which == 4) {
+                    pd.setMessage("Changing Password");
+                    showChangePasswordDialog();
                 }
             }
         });
@@ -283,8 +289,87 @@ public class ProfileFragment extends Fragment {
         builder.create().show();
     }
 
+    private void showChangePasswordDialog() {
+        //password change dialog with custom layout having currentPassword, newPassword and update button
+
+        //inflate layout for dialog
+        View view = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_update_password, null);
+        final EditText passwordEt = view.findViewById(R.id.passwordEt);
+        final EditText newPasswordEt = view.findViewById(R.id.newPasswordEt);
+        Button updatePasswordBtn = view.findViewById(R.id.updatePasswordBtn);
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setView(view);//set view to dialog
+
+        final AlertDialog dialog = builder.create();
+        dialog.show();
+
+        updatePasswordBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //validate data
+                String oldPassword = passwordEt.getText().toString().trim();
+                String newPassword = newPasswordEt.getText().toString().trim();
+                if (TextUtils.isEmpty(oldPassword)){
+                    Toast.makeText(getActivity(), "Enter your current password...", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (newPassword.length()<6){
+                    Toast.makeText(getActivity(), "Password length must atleast 6 characters...", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                dialog.dismiss();
+                updatePassword(oldPassword, newPassword);
+            }
+        });
+
+    }
+
+    private void updatePassword(String oldPassword, String newPassword) {
+        pd.show();
+        //get current user
+        final FirebaseUser user = firebaseAuth.getCurrentUser();
+
+        //before change password re-authenticate the user
+        AuthCredential authCredential = EmailAuthProvider.getCredential(user.getEmail(), oldPassword);
+        user.reauthenticate(authCredential)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        //successfully authenticated, begin update
+                        user.updatePassword(newPassword)
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+                                        //password update
+                                        pd.dismiss();
+                                        Toast.makeText(getActivity(), "Password Update...", Toast.LENGTH_SHORT).show();
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        pd.dismiss();
+                                        Toast.makeText(getActivity(), ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        //authentication failed, show reason
+                        pd.dismiss();
+                        Toast.makeText(getActivity(),""+ e.getMessage(), Toast.LENGTH_SHORT).show();
+
+                    }
+                });
+    }
+
     private void showImagePicDialog() {
         String options[] = {"Camera", "Gallery"};
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Pick Image From");
         builder.setItems(options, new DialogInterface.OnClickListener() {
@@ -357,6 +442,40 @@ public class ProfileFragment extends Fragment {
 
                             @Override
                             public void onCancelled(@NonNull DatabaseError error) {
+
+                            }
+                        });
+
+                        //update name in current user comments on posts
+                        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+                                for (DataSnapshot ds : snapshot.getChildren()) {
+                                    String child = ds.getKey();
+                                    if (snapshot.child(child).hasChild("Comments")) {
+                                        String child1 = "" + snapshot.child(child).getKey();
+                                        Query child2 = FirebaseDatabase.getInstance().getReference("Posts")
+                                                .child(child1).child("Comments").orderByChild("uid").equalTo(uid);
+                                        child2.addValueEventListener(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+                                                for (DataSnapshot ds : snapshot.getChildren()) {
+                                                    String child = ds.getKey();
+                                                    snapshot.getRef().child(child).child("uName").setValue(value);
+                                                }
+                                            }
+
+                                            @Override
+                                            public void onCancelled(@NonNull @NotNull DatabaseError error) {
+
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull @NotNull DatabaseError error) {
 
                             }
                         });
@@ -467,6 +586,40 @@ public class ProfileFragment extends Fragment {
 
                             }
                         });
+                        //update image in current user comments on posts
+                        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+                                for (DataSnapshot ds : snapshot.getChildren()) {
+                                    String child = ds.getKey();
+                                    if (snapshot.child(child).hasChild("Comments")) {
+                                        String child1 = "" + snapshot.child(child).getKey();
+                                        Query child2 = FirebaseDatabase.getInstance().getReference("Posts")
+                                                .child(child1).child("Comments").orderByChild("uid").equalTo(uid);
+                                        child2.addValueEventListener(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+                                                for (DataSnapshot ds : snapshot.getChildren()) {
+                                                    String child = ds.getKey();
+                                                    snapshot.getRef().child(child).child("uDp").setValue(dowloandUri.toString());
+                                                }
+
+                                            }
+
+                                            @Override
+                                            public void onCancelled(@NonNull @NotNull DatabaseError error) {
+
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull @NotNull DatabaseError error) {
+
+                            }
+                        });
                     }
 
                 } else {
@@ -525,6 +678,11 @@ public class ProfileFragment extends Fragment {
 
         inflater.inflate(R.menu.menu_main, menu);
 
+        //hide some options
+        menu.findItem(R.id.action_create_group).setVisible(false);
+        menu.findItem(R.id.action_add_participant).setVisible(false);
+        menu.findItem(R.id.action_groupInfo).setVisible(false);
+
         MenuItem item = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -559,9 +717,12 @@ public class ProfileFragment extends Fragment {
         if (id == R.id.action_logout) {
             firebaseAuth.signOut();
             checkUserStatus();
-        }
+        }else
         if (id == R.id.action_add_post) {
             startActivity(new Intent(getActivity(), AddPostActivity.class));
+        }else if(id==R.id.action_settings){
+            //go to settings activity
+            startActivity(new Intent(getActivity(), SettingsActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }

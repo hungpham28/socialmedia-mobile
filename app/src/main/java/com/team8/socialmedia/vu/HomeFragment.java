@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -30,6 +31,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
 import com.team8.socialmedia.hung.AddPostActivity;
+import com.team8.socialmedia.hung.GroupCreateActivity;
+import com.team8.socialmedia.hung.SettingsActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +63,7 @@ public class HomeFragment extends Fragment {
 
         postList = new ArrayList<>();
         loadPosts();
+
         return view;
     }
 
@@ -95,7 +99,8 @@ public class HomeFragment extends Fragment {
                     if (modelPost.getpTitle().toLowerCase().contains(searchQuery.toLowerCase())
                             || modelPost.getpDescr().toLowerCase().contains(searchQuery.toLowerCase())) {
                         postList.add(modelPost);
-                    }                }
+                    }
+                }
                 adapterPosts = new AdapterPosts(getActivity(), postList);
                 recyclerView.setAdapter(adapterPosts);
             }
@@ -130,6 +135,10 @@ public class HomeFragment extends Fragment {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         //inflating menu
         inflater.inflate(R.menu.menu_main, menu);
+
+        menu.findItem(R.id.action_create_group).setVisible(false);
+        menu.findItem(R.id.action_add_participant).setVisible(false);
+        menu.findItem(R.id.action_groupInfo).setVisible(false);
 
         MenuItem item = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
@@ -166,9 +175,14 @@ public class HomeFragment extends Fragment {
         if (id == R.id.action_logout) {
             firebaseAuth.signOut();
             checkUserStatus();
-        }
-        if (id == R.id.action_add_post) {
+        } else if (id == R.id.action_add_post) {
             startActivity(new Intent(getActivity(), AddPostActivity.class));
+        } else if (id == R.id.action_settings) {
+            //go to settings activity
+            startActivity(new Intent(getActivity(), SettingsActivity.class));
+        }else if(id==R.id.action_create_group){
+            //got to settings activity
+            startActivity(new Intent(getActivity(), GroupCreateActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }

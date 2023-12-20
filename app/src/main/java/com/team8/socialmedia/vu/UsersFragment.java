@@ -32,6 +32,8 @@ import com.google.firebase.ktx.Firebase;
 import com.team8.socialmedia.MainActivity;
 import com.team8.socialmedia.R;
 import com.team8.socialmedia.hung.DashboardActivity;
+import com.team8.socialmedia.hung.GroupCreateActivity;
+import com.team8.socialmedia.hung.SettingsActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,7 +145,6 @@ public class UsersFragment extends Fragment {
         setHasOptionsMenu(true);
         super.onCreate(savedInstanceState);
     }
-
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 
@@ -152,6 +153,8 @@ public class UsersFragment extends Fragment {
 
         //hide addpost icon from this fragment
         menu.findItem(R.id.action_add_post).setVisible(false);
+        menu.findItem(R.id.action_add_participant).setVisible(false);
+        menu.findItem(R.id.action_groupInfo).setVisible(false);
 
         MenuItem item = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
@@ -179,7 +182,6 @@ public class UsersFragment extends Fragment {
 
         super.onCreateOptionsMenu(menu, inflater);
     }
-
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         //get item id
@@ -187,6 +189,12 @@ public class UsersFragment extends Fragment {
         if (id == R.id.action_logout) {
             firebaseAuth.signOut();
             checkUserStatus();
+        }else if(id==R.id.action_settings){
+            //go to settings activity
+            startActivity(new Intent(getActivity(), SettingsActivity.class));
+        }else if(id==R.id.action_create_group){
+            //got to settings activity
+            startActivity(new Intent(getActivity(), GroupCreateActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }

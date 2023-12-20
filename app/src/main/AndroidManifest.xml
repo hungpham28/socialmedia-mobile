@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.FLASHLIGHT" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -21,6 +22,7 @@
         tools:ignore="ScopedStorage" />
 
     <application
+        android:name=".kone.MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -32,11 +34,51 @@
         android:theme="@style/Theme.SocialMediaApp"
         tools:targetApi="31">
         <activity
-            android:name=".vu.ThereProfileActivity"
+            android:name=".kone.GroupEditActivity"
             android:exported="false" />
         <activity
-            android:name=".hung.AddPostActivity"
+            android:name=".GroupInfoActivity"
             android:exported="false" />
+        <activity
+            android:name=".vu.GroupParticipantAddActivity"
+            android:exported="false" />
+        <activity
+            android:name=".vu.GroupChatActivity"
+            android:theme="@style/AppThemeNo" />
+        <activity
+            android:name=".hung.GroupCreateActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PostLikedByActivity"
+            android:exported="false" />
+        <activity
+            android:name=".hung.SettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".hung.PostDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".vu.ThereProfileActivity"
+            android:exported="false" />
+        <!--
+Intent filters inform system what intents an application compoment is willing to accept.
+        to receive text/image type of intents we will add intent filter to activity, that will handle that data
+        -->
+        <activity
+            android:name=".hung.AddPostActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter>
+                <!-- For Text -->
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".hung.LoginActivity"
             android:exported="false" />
@@ -48,6 +90,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -59,20 +102,31 @@
             android:exported="false" />
 
         <service
-            android:name="com.team8.socialmedia.vu.notifications.FirebaseService"
+            android:name=".vu.notifications.FirebaseService"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_SERVICE"></action>
+                <action android:name="com.google.firebase.INSTANCE_ID_SERVICE" />
             </intent-filter>
         </service>
-        <service android:name="com.team8.socialmedia.vu.notifications.FirebaseMessaging"
+
+        <service
+            android:name=".vu.notifications.FirebaseMessaging"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"></action>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
-        </service>
+        </service> <!-- define file provider -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.example.unity.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/paths" />
+        </provider>
     </application>
 
 </manifest>

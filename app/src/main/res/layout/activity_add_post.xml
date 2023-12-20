@@ -26,7 +26,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/pImageIv"
-                android:background="@color/secondary"
+                android:background="@color/primaryLight"
                 android:minHeight="200dp"/>
 
         <!--EditText: Input post description-->
